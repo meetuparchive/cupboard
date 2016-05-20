@@ -4,7 +4,7 @@ import org.scalatest._
 import spray.json._
 import com.meetup.cupboard.models.{ Bar, Foo }
 
-class FamilyFormatsSpec extends FlatSpec with Matchers {
+class JsonSpec extends FlatSpec with Matchers {
   import JsonFormats._
 
   "JsonFormats" should "serialize & deserialize case classes" in {
