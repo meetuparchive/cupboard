@@ -28,12 +28,12 @@ object JsonFormats extends DefaultJsonProtocol {
   implicit def hListFormat[Key <: Symbol, Value, Remaining <: HList](
     implicit
     key: Witness.Aux[Key],
-    lazyHeadFormat: Lazy[JsonFormat[Value]],
-    lazyTailFormat: Lazy[JsonFormat[Remaining]]
+    headFormat: JsonFormat[Value],
+    tailFormat: JsonFormat[Remaining]
   ): JsonFormat[FieldType[Key, Value] :: Remaining] = new JsonFormat[FieldType[Key, Value] :: Remaining] {
 
-    val headFormat = lazyHeadFormat.value
-    val tailFormat = lazyTailFormat.value
+    //val headFormat = lazyHeadFormat.value
+    //val tailFormat = lazyTailFormat.value
 
     def write(hlist: FieldType[Key, Value] :: Remaining) = {
       val tailJs = tailFormat.write(hlist.tail).asJsObject()
