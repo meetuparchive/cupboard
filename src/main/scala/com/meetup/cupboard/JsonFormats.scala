@@ -1,6 +1,7 @@
 package com.meetup.cupboard
 
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME;
 
 import shapeless.labelled._
 import shapeless.{ ::, HList, HNil, LabelledGeneric, Lazy, Witness }
@@ -28,11 +29,11 @@ object JsonFormats extends DefaultJsonProtocol {
   }
 
   implicit object DateJsonFormat extends JsonFormat[ZonedDateTime] {
-    //TODO: we could use a different formatter for time
-    override def write(obj: ZonedDateTime) = JsString(obj.toString)
+    val formatter = ISO_ZONED_DATE_TIME
+    override def write(obj: ZonedDateTime) = JsString(formatter.format(obj))
 
     override def read(json: JsValue): ZonedDateTime = json match {
-      case JsString(s) => ZonedDateTime.parse(s)
+      case JsString(s) => ZonedDateTime.parse(s, formatter)
       case _ => throw new RuntimeException("Date must be encoded as string")
     }
   }
