@@ -12,8 +12,6 @@ class JarCupboardComponentTest extends FunSpec with Matchers {
   describe("jar-cupboard-test") {
     it("should work as dependency") {
       // serialize
-      val x: JsonFormat[Foo] = implicitly[JsonFormat[Foo]]
-
       val foo1 = Foo("foo", 1)
       val fooJson = foo1.toJson
       println(fooJson)
