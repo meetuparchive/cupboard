@@ -15,7 +15,7 @@ package object models {
     trialEnd: Option[ZonedDateTime],
     status: SubscriptionStatus,
     notes: String,
-    flag: Int // TODO what is this
+    flag: Int
   )
   object Subscription {
     val empty = Subscription(None, None, None, None, None, SubscriptionStatus.New, "", 0)
