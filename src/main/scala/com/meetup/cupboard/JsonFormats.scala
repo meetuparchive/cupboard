@@ -1,8 +1,11 @@
 package com.meetup.cupboard
 
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME;
+
 import shapeless.labelled._
 import shapeless.{ ::, HList, HNil, LabelledGeneric, Lazy, Witness }
-import spray.json.{ DefaultJsonProtocol, JsObject, JsValue, JsonFormat }
+import spray.json.{ DefaultJsonProtocol, JsObject, JsString, JsValue, JsonFormat }
 
 /**
  * This exists primarily to test the conversion between case classes and a representation,
@@ -23,6 +26,16 @@ object JsonFormats extends DefaultJsonProtocol {
   implicit object hNilFormat extends JsonFormat[HNil] {
     def read(j: JsValue) = HNil
     def write(n: HNil) = JsObject()
+  }
+
+  implicit object DateJsonFormat extends JsonFormat[ZonedDateTime] {
+    val formatter = ISO_ZONED_DATE_TIME
+    override def write(obj: ZonedDateTime) = JsString(formatter.format(obj))
+
+    override def read(json: JsValue): ZonedDateTime = json match {
+      case JsString(s) => ZonedDateTime.parse(s, formatter)
+      case _ => throw new RuntimeException("Date must be encoded as string")
+    }
   }
 
   implicit def hListFormat[Key <: Symbol, Value, Remaining <: HList](
