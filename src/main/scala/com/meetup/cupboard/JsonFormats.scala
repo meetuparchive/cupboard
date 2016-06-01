@@ -1,11 +1,11 @@
 package com.meetup.cupboard
 
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME;
+import java.time.format.DateTimeFormatter.ISO_ZONED_DATE_TIME
 
 import shapeless.labelled._
-import shapeless.{ ::, HList, HNil, LabelledGeneric, Lazy, Witness }
-import spray.json.{ DefaultJsonProtocol, JsObject, JsString, JsValue, JsonFormat }
+import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
+import spray.json.{DefaultJsonProtocol, JsObject, JsString, JsValue, JsonFormat}
 
 /**
  * This exists primarily to test the conversion between case classes and a representation,

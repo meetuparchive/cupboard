@@ -11,6 +11,9 @@ class JsonSpec extends FlatSpec with Matchers {
 
   "JsonFormats" should "serialize & deserialize case classes" in {
     // serialize
+
+
+
     val foo1 = Foo("foo", 1)
     val fooJson = foo1.toJson
     println(fooJson)

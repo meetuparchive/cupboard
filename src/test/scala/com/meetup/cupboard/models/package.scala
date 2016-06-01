@@ -7,6 +7,7 @@ import spray.json.{ JsNumber, JsString, JsValue, JsonFormat }
 package object models {
   case class Foo(s: String, i: Int)
   case class Bar(i: Int, f: Foo)
+
   case class Subscription(
     startDate: Option[ZonedDateTime],
     endDate: Option[ZonedDateTime],
