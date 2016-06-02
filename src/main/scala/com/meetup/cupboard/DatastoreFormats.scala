@@ -7,46 +7,15 @@ import com.google.cloud.datastore.{Entity, DateTime => GDateTime}
 
 object DatastoreFormats {
 
-  trait DatastoreFormat[A] {
-    def fromEntity(e: Entity): A
-
-    def buildEntity(a: A, e: Entity.Builder): Entity.Builder
-  }
+  /////////
+  // DatastoreProperties define how to translate individual values from the case class type to the datastore type.
+  // TODO: Move these to a trait which DatastoreFormats extends.
+  /////////
 
   trait DatastoreProperty[V, D] {
     def getValueFromEntity(fieldName: String, e: Entity): V
 
     def setEntityProperty(v: V, fieldName: String, e: Entity.Builder): Entity.Builder
-  }
-
-  implicit object hNilFormat extends DatastoreFormat[HNil] {
-    def fromEntity(j: Entity): HNil = HNil
-
-    def buildEntity(h: HNil, e: Entity.Builder): Entity.Builder = e
-  }
-
-  implicit def hListFormat[Key <: Symbol, Value, Remaining <: HList, DatastoreValue](
-    implicit
-    key: Witness.Aux[Key],
-    propertyConverter: DatastoreProperty[Value, DatastoreValue],
-    //headFormat: DatastoreFormat[Value],
-    tailFormat: DatastoreFormat[Remaining]
-  ): DatastoreFormat[FieldType[Key, Value] :: Remaining] = new DatastoreFormat[FieldType[Key, Value] :: Remaining] {
-
-    def buildEntity(hlist: FieldType[Key, Value] :: Remaining, e: Entity.Builder): Entity.Builder = {
-      val tailEntity = tailFormat.buildEntity(hlist.tail, e)
-      val fieldName = key.value.name // the name was part of the tagged type
-      propertyConverter.setEntityProperty(hlist.head, fieldName, tailEntity)
-      e
-    }
-
-    def fromEntity(e: Entity): ::[FieldType[Key, Value], Remaining] = {
-      val fieldName = key.value.name
-      val v = propertyConverter.getValueFromEntity(fieldName, e)
-      val tail = tailFormat.fromEntity(e)
-      field[Key](v) :: tail
-    }
-
   }
 
   implicit object StringDatastoreProperty extends DatastoreProperty[String, String] {
@@ -89,6 +58,44 @@ object DatastoreFormats {
     }
   }
 
+  /// The following section uses the Shapeless library to allow us to work with case classes in a generic way.
+  /// You may need to refer to the Shapeless documentation to get a good sense of what this is doing.
+
+  trait DatastoreFormat[A] {
+    def fromEntity(e: Entity): A
+
+    def buildEntity(a: A, e: Entity.Builder): Entity.Builder
+  }
+
+  implicit object hNilFormat extends DatastoreFormat[HNil] {
+    def fromEntity(j: Entity): HNil = HNil
+
+    def buildEntity(h: HNil, e: Entity.Builder): Entity.Builder = e
+  }
+
+  implicit def hListFormat[Key <: Symbol, Value, Remaining <: HList, DatastoreValue](
+    implicit
+    key: Witness.Aux[Key],
+    propertyConverter: DatastoreProperty[Value, DatastoreValue],
+    tailFormat: DatastoreFormat[Remaining]
+  ): DatastoreFormat[FieldType[Key, Value] :: Remaining] = new DatastoreFormat[FieldType[Key, Value] :: Remaining] {
+
+    def buildEntity(hlist: FieldType[Key, Value] :: Remaining, e: Entity.Builder): Entity.Builder = {
+      val tailEntity = tailFormat.buildEntity(hlist.tail, e)
+      val fieldName = key.value.name // the name was part of the tagged type
+      propertyConverter.setEntityProperty(hlist.head, fieldName, tailEntity)
+      e
+    }
+
+    def fromEntity(e: Entity): ::[FieldType[Key, Value], Remaining] = {
+      val fieldName = key.value.name
+      val v = propertyConverter.getValueFromEntity(fieldName, e)
+      val tail = tailFormat.fromEntity(e)
+      field[Key](v) :: tail
+    }
+
+  }
+
   /**
    * The following code is what allows us to make the leap from case classes
    * to HLists of FieldType[Key, Value].
@@ -107,10 +114,5 @@ object DatastoreFormats {
     def fromEntity(j: Entity): T = gen.from(sg.fromEntity(j))
 
     def buildEntity(t: T, e: Entity.Builder): Entity.Builder = sg.buildEntity(gen.to(t), e)
-  }
-
-  def hi[A](a: A)(implicit z: DatastoreFormat[A]) = {
-    println("ok")
-    z
   }
 }
