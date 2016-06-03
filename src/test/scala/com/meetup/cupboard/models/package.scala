@@ -2,11 +2,14 @@ package com.meetup.cupboard
 
 import java.time.ZonedDateTime
 
-import spray.json.{ JsNumber, JsString, JsValue, JsonFormat }
+import spray.json.{JsNumber, JsString, JsValue, JsonFormat}
 
 package object models {
+  case class Simple(s: String)
   case class Foo(s: String, i: Int)
   case class Bar(i: Int, f: Foo)
+  case class Qux[T](i: Int)
+  case class Phantom[T, U](i: Int)
   case class Subscription(
     startDate: Option[ZonedDateTime],
     endDate: Option[ZonedDateTime],
