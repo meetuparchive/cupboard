@@ -3,9 +3,10 @@ package com.meetup.cupboard
 import java.time.{Instant, ZoneOffset, ZonedDateTime}
 
 import cats.data.Xor
+import com.google.cloud.datastore.Entity.Builder
 import shapeless.labelled._
-import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
-import com.google.cloud.datastore.{Entity, FullEntity, DateTime => GDateTime, Key}
+import shapeless.{:+:, ::, CNil, Coproduct, HList, HNil, Inl, Inr, LabelledGeneric, Lazy, Witness}
+import com.google.cloud.datastore.{Entity, FullEntity, Key, DateTime => GDateTime}
 
 object DatastoreFormats {
 
@@ -139,4 +140,69 @@ object DatastoreFormats {
 
     def buildEntity(t: T, e: Entity.Builder): Entity.Builder = sg.buildEntity(gen.to(t), e)
   }
+
+  implicit object CNilDatastoreFormat extends DatastoreFormat[CNil] {
+    override def fromEntity(e: FullEntity[Key]): Xor[Throwable, CNil] = ???
+    override def buildEntity(a: CNil, e: Builder): Builder = ???
+  }
+
+  implicit def coproductDatastoreFormat[Name <: Symbol, Head, Tail <: Coproduct](implicit
+    key: Witness.Aux[Name],
+    lazyHeadFormat: Lazy[DatastoreFormat[Head]],
+    lazyTailFormat: Lazy[DatastoreFormat[Tail]]): DatastoreFormat[FieldType[Name, Head] :+: Tail] = new DatastoreFormat[FieldType[Name, Head] :+: Tail] {
+    override def fromEntity(e: FullEntity[Key]): Xor[Throwable, :+:[FieldType[Name, Head], Tail]] = {
+      if (e.getString("type") == key.value.name) {
+        lazyHeadFormat.value.fromEntity(e).map(headResult =>
+          Inl(field[Name](headResult))
+        )
+      } else {
+        lazyTailFormat.value.fromEntity(e).map(tailResult =>
+          Inr(tailResult)
+        )
+      }
+    }
+
+    override def buildEntity(a: :+:[FieldType[Name, Head], Tail], e: Builder): Builder = {
+      a match {
+        case Inl(head) =>
+          val newE: Builder = lazyHeadFormat.value.buildEntity(head, e)
+          newE.set("type", key.value.name)
+          e
+        case Inr(tail) =>
+          lazyTailFormat.value.buildEntity(tail, e)
+      }
+
+    }
+  }
+
+  /*
+
+  +  implicit def coproductBigDataFormat[Name <: Symbol, Head, Tail <: Coproduct](
+                                                                                   +    implicit
+  +    key: Witness.Aux[Name],
+  +    lazyHeadFormat: Lazy[BigDataFormat[Head]],
+  +    lazyTailFormat: Lazy[BigDataFormat[Tail]]
+  +  ): BigDataFormat[FieldType[Name, Head] :+: Tail] = new BigDataFormat[FieldType[Name, Head] :+: Tail] {
+    +    def label: String = key.value.name
+    +    def toProperties(t: FieldType[Name, Head] :+: Tail): StringyMap = t match {
+    +      case Inl(head) =>
+    +        val map = lazyHeadFormat.value.toProperties(head)
+    +        map.put("_typeHint", key.value.name)
+    +        map
+    +      case Inr(tail) =>
+        +        lazyTailFormat.value.toProperties(tail)
+    +    }
+    +    def fromProperties(m: StringyMap): BigResult[FieldType[Name, Head] :+: Tail] = {
+      +      if (m.get("_typeHint").asInstanceOf[String] == label) {
+        +        lazyHeadFormat.value.fromProperties(m).right map { headResult =>
+          +          Inl(field[Name](headResult))
+          +        }
+        +      } else {
+        +        lazyTailFormat.value.fromProperties(m).right map { tailResult =>
+          +          Inr(tailResult)
+          +        }
+        +      }
+      +    }
+    +  }
+*/
 }
