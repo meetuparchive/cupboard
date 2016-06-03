@@ -22,6 +22,12 @@ class DatastoreSpec extends FlatSpec with Matchers with AdHocDatastore {
       z1 shouldBe z1restored
       val z2restored: Persisted[Foo] = Cupboard.load[Foo](ds, z2.id, "Foo")
       z2 shouldBe z2restored
+
+      val bar = Bar(1, Foo("hi", 4))
+      val barP: Persisted[Bar] = Cupboard.save(ds, bar)
+      val barR: Persisted[Bar] = Cupboard.load[Bar](ds, barP.id, "Bar")
+      barP shouldBe barR
+
     }
   }
 }
