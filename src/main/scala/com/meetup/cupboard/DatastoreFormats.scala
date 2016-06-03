@@ -15,14 +15,14 @@ object DatastoreFormats {
   /////////
 
   trait DatastoreProperty[V, D] {
-    def getValueFromEntity(fieldName: String, e: Entity): V
+    def getValueFromEntity(fieldName: String, e: Entity): Xor[Throwable, V]
 
     def setEntityProperty(v: V, fieldName: String, e: Entity.Builder): Entity.Builder
   }
 
   implicit object StringDatastoreProperty extends DatastoreProperty[String, String] {
-    def getValueFromEntity(name: String, e: Entity): String = {
-      e.getString(name)
+    def getValueFromEntity(name: String, e: Entity) = {
+      Xor.catchNonFatal(e.getString(name))
     }
 
     def setEntityProperty(v: String, name: String, e: Entity.Builder): Entity.Builder = {
@@ -31,8 +31,8 @@ object DatastoreFormats {
   }
 
   implicit object IntDatastoreProperty extends DatastoreProperty[Int, Int] {
-    def getValueFromEntity(name: String, e: Entity): Int = {
-      e.getLong(name).toInt
+    def getValueFromEntity(name: String, e: Entity) = {
+      Xor.catchNonFatal(e.getLong(name).toInt)
     }
 
     def setEntityProperty(v: Int, name: String, e: Entity.Builder) = {
@@ -41,9 +41,11 @@ object DatastoreFormats {
   }
 
   implicit object ZonedDateTimeDatastoreProperty extends DatastoreProperty[ZonedDateTime, GDateTime] {
-    def getValueFromEntity(name: String, e: Entity): ZonedDateTime = {
-      val millis: Long = e.getDateTime(name).timestampMillis()
-      ZonedDateTime.from(Instant.ofEpochMilli(millis).atOffset(ZoneOffset.UTC))
+    def getValueFromEntity(name: String, e: Entity) = {
+      Xor.catchNonFatal {
+        val millis: Long = e.getDateTime(name).timestampMillis()
+        ZonedDateTime.from(Instant.ofEpochMilli(millis).atOffset(ZoneOffset.UTC))
+      }
     }
     def setEntityProperty(v: ZonedDateTime, name: String, e: Entity.Builder) = {
       e.set(name, GDateTime.copyFrom(java.util.Date.from(v.toInstant())))
@@ -51,9 +53,11 @@ object DatastoreFormats {
   }
 
   implicit object InstantDatastoreProperty extends DatastoreProperty[Instant, GDateTime] {
-    def getValueFromEntity(name: String, e: Entity): Instant = {
-      val millis: Long = e.getDateTime(name).timestampMillis()
-      Instant.ofEpochMilli(millis)
+    def getValueFromEntity(name: String, e: Entity) = {
+      Xor.catchNonFatal {
+        val millis: Long = e.getDateTime(name).timestampMillis()
+        Instant.ofEpochMilli(millis)
+      }
     }
     def setEntityProperty(v: Instant, name: String, e: Entity.Builder) = {
       e.set(name, GDateTime.copyFrom(java.util.Date.from(v)))
@@ -64,7 +68,7 @@ object DatastoreFormats {
   /// You may need to refer to the Shapeless documentation to get a good sense of what this is doing.
 
   trait DatastoreFormat[A] {
-    def fromEntity(e: Entity): Xor[Exception, A]
+    def fromEntity(e: Entity): Xor[Throwable, A]
 
     def buildEntity(a: A, e: Entity.Builder): Entity.Builder
   }
@@ -89,11 +93,15 @@ object DatastoreFormats {
       e
     }
 
-    def fromEntity(e: Entity) = {
+    def fromEntity(e: Entity): Xor[Throwable, ::[FieldType[Key, Value], Remaining]] = {
       val fieldName = key.value.name
       val v = propertyConverter.getValueFromEntity(fieldName, e)
       val tail = tailFormat.fromEntity(e)
-      tail.map(field[Key](v) :: _)
+      tail.flatMap { tail2 =>
+        v.map(v2 =>
+          field[Key](v2) :: tail2
+        )
+      }
     }
 
   }
@@ -113,7 +121,7 @@ object DatastoreFormats {
   ): DatastoreFormat[T] = new DatastoreFormat[T] {
     val sg = lazySg.value
 
-    def fromEntity(j: Entity): Xor[Exception, T] = {
+    def fromEntity(j: Entity): Xor[Throwable, T] = {
       sg.fromEntity(j)
         .map(gen.from(_))
     }

@@ -43,10 +43,14 @@ object Cupboard {
       .getOrElse(Xor.Left(new RuntimeException(s"No entity found with id $id")))
 
     entityXor.flatMap { entity =>
-      cf.fromEntity(entity).map { caseClass =>
+      cf.fromEntity(entity).flatMap { caseClass =>
         val modified = InstantDatastoreProperty.getValueFromEntity("modified", entity)
         val created = InstantDatastoreProperty.getValueFromEntity("created", entity)
-        Persisted(id, caseClass, modified, created)
+        modified.flatMap { mtime =>
+          created.map(ctime =>
+            Persisted(id, caseClass, mtime, ctime)
+          )
+        }
       }
     }
   }
