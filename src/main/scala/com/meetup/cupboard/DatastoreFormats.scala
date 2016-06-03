@@ -1,6 +1,8 @@
 package com.meetup.cupboard
 
 import java.time.{Instant, ZoneOffset, ZonedDateTime}
+
+import cats.data.Xor
 import shapeless.labelled._
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
 import com.google.cloud.datastore.{Entity, DateTime => GDateTime}
@@ -62,13 +64,13 @@ object DatastoreFormats {
   /// You may need to refer to the Shapeless documentation to get a good sense of what this is doing.
 
   trait DatastoreFormat[A] {
-    def fromEntity(e: Entity): A
+    def fromEntity(e: Entity): Xor[Exception, A]
 
     def buildEntity(a: A, e: Entity.Builder): Entity.Builder
   }
 
   implicit object hNilFormat extends DatastoreFormat[HNil] {
-    def fromEntity(j: Entity): HNil = HNil
+    def fromEntity(j: Entity) = Xor.Right(HNil)
 
     def buildEntity(h: HNil, e: Entity.Builder): Entity.Builder = e
   }
@@ -87,11 +89,11 @@ object DatastoreFormats {
       e
     }
 
-    def fromEntity(e: Entity): ::[FieldType[Key, Value], Remaining] = {
+    def fromEntity(e: Entity) = {
       val fieldName = key.value.name
       val v = propertyConverter.getValueFromEntity(fieldName, e)
       val tail = tailFormat.fromEntity(e)
-      field[Key](v) :: tail
+      tail.map(field[Key](v) :: _)
     }
 
   }
@@ -111,7 +113,10 @@ object DatastoreFormats {
   ): DatastoreFormat[T] = new DatastoreFormat[T] {
     val sg = lazySg.value
 
-    def fromEntity(j: Entity): T = gen.from(sg.fromEntity(j))
+    def fromEntity(j: Entity): Xor[Exception, T] = {
+      sg.fromEntity(j)
+        .map(gen.from(_))
+    }
 
     def buildEntity(t: T, e: Entity.Builder): Entity.Builder = sg.buildEntity(gen.to(t), e)
   }
