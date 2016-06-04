@@ -1,10 +1,7 @@
 package com.meetup.cupboard
 
-import java.time.{Instant, ZoneOffset, ZonedDateTime}
-
-import com.google.cloud.datastore.{Datastore, Entity, DateTime => GDateTime}
+import java.time.{ZoneOffset, ZonedDateTime}
 import org.scalatest._
-// spray.json._
 import com.meetup.cupboard.models.{Bar, Subscription, _}
 import cats.data.Xor
 
@@ -29,6 +26,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
         z1R.map(_.entity) shouldBe Xor.Right(z)
       }
     }
+
     it("should support custom kinds") {
       withDatastore() { ds =>
 

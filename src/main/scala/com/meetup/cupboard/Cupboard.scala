@@ -15,7 +15,6 @@ object Cupboard {
       val eBuilder = Entity.builder(key)
       val e = cf.buildEntity(caseClass, eBuilder)
 
-      // set mtime, ctime
       val now = Instant.now
       InstantDatastoreProperty.setEntityProperty(now, "modified", e)
       InstantDatastoreProperty.setEntityProperty(now, "created", e)
