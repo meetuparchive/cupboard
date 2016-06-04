@@ -96,27 +96,28 @@ object DatastoreFormats {
     key: Witness.Aux[FieldKey],
     propertyConverter: DatastoreProperty[Value, DatastoreValue],
     tailFormat: DatastoreFormat[Remaining]
-  ): DatastoreFormat[FieldType[FieldKey, Value] :: Remaining] = new DatastoreFormat[FieldType[FieldKey, Value] :: Remaining] {
+  ): DatastoreFormat[FieldType[FieldKey, Value] :: Remaining] =
+    new DatastoreFormat[FieldType[FieldKey, Value] :: Remaining] {
 
-    def buildEntity(hlist: FieldType[FieldKey, Value] :: Remaining, e: Entity.Builder): Entity.Builder = {
-      val tailEntity = tailFormat.buildEntity(hlist.tail, e)
-      val fieldName = key.value.name // the name was part of the tagged type
-      propertyConverter.setEntityProperty(hlist.head, fieldName, tailEntity)
-      e
-    }
-
-    def fromEntity(e: FullEntity[Key]): Xor[Throwable, ::[FieldType[FieldKey, Value], Remaining]] = {
-      val fieldName = key.value.name
-      val v = propertyConverter.getValueFromEntity(fieldName, e)
-      val tail = tailFormat.fromEntity(e)
-      tail.flatMap { tail2 =>
-        v.map(v2 =>
-          field[FieldKey](v2) :: tail2
-        )
+      def buildEntity(hlist: FieldType[FieldKey, Value] :: Remaining, e: Entity.Builder): Entity.Builder = {
+        val tailEntity = tailFormat.buildEntity(hlist.tail, e)
+        val fieldName = key.value.name // the name was part of the tagged type
+        propertyConverter.setEntityProperty(hlist.head, fieldName, tailEntity)
+        e
       }
-    }
 
-  }
+      def fromEntity(e: FullEntity[Key]): Xor[Throwable, FieldType[FieldKey, Value] :: Remaining] = {
+        val fieldName = key.value.name
+        val v = propertyConverter.getValueFromEntity(fieldName, e)
+        val tail = tailFormat.fromEntity(e)
+        tail.flatMap { tail2 =>
+          v.map(v2 =>
+            field[FieldKey](v2) :: tail2
+          )
+        }
+      }
+
+    }
 
   /**
    * The following code is what allows us to make the leap from case classes
@@ -174,35 +175,4 @@ object DatastoreFormats {
 
     }
   }
-
-  /*
-
-  +  implicit def coproductBigDataFormat[Name <: Symbol, Head, Tail <: Coproduct](
-                                                                                   +    implicit
-  +    key: Witness.Aux[Name],
-  +    lazyHeadFormat: Lazy[BigDataFormat[Head]],
-  +    lazyTailFormat: Lazy[BigDataFormat[Tail]]
-  +  ): BigDataFormat[FieldType[Name, Head] :+: Tail] = new BigDataFormat[FieldType[Name, Head] :+: Tail] {
-    +    def label: String = key.value.name
-    +    def toProperties(t: FieldType[Name, Head] :+: Tail): StringyMap = t match {
-    +      case Inl(head) =>
-    +        val map = lazyHeadFormat.value.toProperties(head)
-    +        map.put("_typeHint", key.value.name)
-    +        map
-    +      case Inr(tail) =>
-        +        lazyTailFormat.value.toProperties(tail)
-    +    }
-    +    def fromProperties(m: StringyMap): BigResult[FieldType[Name, Head] :+: Tail] = {
-      +      if (m.get("_typeHint").asInstanceOf[String] == label) {
-        +        lazyHeadFormat.value.fromProperties(m).right map { headResult =>
-          +          Inl(field[Name](headResult))
-          +        }
-        +      } else {
-        +        lazyTailFormat.value.fromProperties(m).right map { tailResult =>
-          +          Inr(tailResult)
-          +        }
-        +      }
-      +    }
-    +  }
-*/
 }

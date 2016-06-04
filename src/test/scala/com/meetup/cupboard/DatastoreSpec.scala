@@ -24,7 +24,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
           println("z1Result is left")
         }
         val z1P = z1Result.getOrElse(fail())
-        val z1R = Cupboard.load[Foo](ds, z1P.id, "customKind")
+        val z1R = Cupboard.loadKind[Foo](ds, z1P.id, "customKind")
         z1Result shouldBe z1R
         z1R.map(_.entity) shouldBe Xor.Right(z)
       }
@@ -36,7 +36,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
 
         val z2P = z2Result.getOrElse(fail())
 
-        val z2R = Cupboard.load[Foo](ds, z2P.id, "Foo")
+        val z2R = Cupboard.loadKind[Foo](ds, z2P.id, "Foo")
         z2Result shouldBe z2R
         z2R.map(_.entity) shouldBe Xor.Right(z)
 
@@ -44,7 +44,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
         val barResult = Cupboard.save(ds, bar)
         val barP = barResult.getOrElse(fail())
 
-        val barR = Cupboard.load[Bar](ds, barP.id, "Bar")
+        val barR = Cupboard.load[Bar](ds, barP.id)
         barResult shouldBe barR
         barR.map(_.entity) shouldBe Xor.Right(bar)
       }
@@ -56,7 +56,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
 
         val statusResult = Cupboard.save[SubscriptionStatus](ds, status, "SubscriptionStatus")
         val statusP = statusResult.getOrElse(fail())
-        val statusR = Cupboard.load[SubscriptionStatus](ds, statusP.id, "SubscriptionStatus")
+        val statusR = Cupboard.loadKind[SubscriptionStatus](ds, statusP.id, "SubscriptionStatus")
         statusP.entity.id shouldBe SubscriptionStatus.Active.id
 
         statusR shouldBe statusResult
@@ -74,7 +74,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
           status = SubscriptionStatus.Active)
         val subscriptionResult = Cupboard.save[Subscription](ds, subscription)
         val subscriptionP = subscriptionResult.getOrElse(fail())
-        val subscriptionR = Cupboard.load[Subscription](ds, subscriptionP.id, "Subscription")
+        val subscriptionR = Cupboard.load[Subscription](ds, subscriptionP.id)
         subscriptionR shouldBe subscriptionResult
 
       }
