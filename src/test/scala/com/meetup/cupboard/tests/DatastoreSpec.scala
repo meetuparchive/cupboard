@@ -1,12 +1,13 @@
-package com.meetup.cupboard
+package com.meetup.cupboard.tests
 
 import java.time.{ZoneOffset, ZonedDateTime}
+
 import org.scalatest._
 import com.meetup.cupboard.models.{Bar, Subscription, _}
 import cats.data.Xor
+import com.meetup.cupboard.{AdHocDatastore, Cupboard, DatastoreFormats}
 
 class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
-
   import DatastoreFormats._
 
   describe("DatastoreFormats") {
