@@ -16,18 +16,27 @@ class DatastoreSpec extends FlatSpec with Matchers with AdHocDatastore {
     withDatastore() { ds =>
       val z = Foo("hi", 3)
 
-      val z1X = Cupboard.save(ds, z, "customKind")
-      val z2X = Cupboard.save(ds, z)
+      val z1Result = Cupboard.save(ds, z, "customKind")
+      val z2Result = Cupboard.save(ds, z)
 
-      val z1id = z1X.getOrElse(fail()).id
-      val z2id = z2X.getOrElse(fail()).id
+      val z1P = z1Result.getOrElse(fail())
+      val z2P = z2Result.getOrElse(fail())
 
-      val z1restored = Cupboard.load[Foo](ds, z1id, "customKind")
-      z1X shouldBe z1restored
+      val z1R = Cupboard.load[Foo](ds, z1P.id, "customKind")
+      z1Result shouldBe z1R
+      z1R.map(_.entity) shouldBe Xor.Right(z)
 
-      val z2 = z2X.getOrElse(fail())
-      val z2restored = Cupboard.load[Foo](ds, z2id, "Foo")
-      z2X shouldBe z2restored
+      val z2R = Cupboard.load[Foo](ds, z2P.id, "Foo")
+      z2Result shouldBe z2R
+      z2R.map(_.entity) shouldBe Xor.Right(z)
+
+      val bar = Bar(1, Foo("hi", 4))
+      val barResult = Cupboard.save(ds, bar)
+      val barP = barResult.getOrElse(fail())
+
+      val barR = Cupboard.load[Bar](ds, barP.id, "Bar")
+      barResult shouldBe barR
+      barR.map(_.entity) shouldBe Xor.Right(bar)
     }
   }
 }
