@@ -29,7 +29,7 @@ package-sbt:
 	"set coverageOutputHTML := false" \
 	test \
 	coverageReport \
-	coverallsMaybe \
+	coveralls \
 	coverageOff \
 	publishLocal \
 	component:test
