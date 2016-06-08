@@ -29,7 +29,7 @@ package-sbt:
 	"set coverageOutputHTML := false" \
 	test \
 	coverageReport \
-	coveralls \
+	coverallsMaybe \
 	coverageOff \
 	publishLocal \
 	component:test
@@ -49,7 +49,7 @@ publish:
 		-v $(CI_IVY_CACHE):/root/.ivy2 \
 		-v $(CI_SBT_CACHE):/root/.sbt \
 		-e VERSION=$(VERSION) \
-		-e COVERALLS_REPO_TOKEN=$(COVERALLS_REPO_TOKEN) 
+		-e COVERALLS_REPO_TOKEN=$(COVERALLS_REPO_TOKEN) \
 		$(BUILDER_TAG) \
 		publish-sbt
 
