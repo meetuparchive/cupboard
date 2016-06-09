@@ -3,9 +3,10 @@ package com.meetup.cupboard
 import java.time.{Instant, ZoneOffset, ZonedDateTime}
 
 import cats.data.Xor
+import com.google.cloud.datastore.Entity.Builder
 import shapeless.labelled._
-import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness}
-import com.google.cloud.datastore.{Entity, FullEntity, DateTime => GDateTime, Key}
+import shapeless.{:+:, ::, CNil, Coproduct, HList, HNil, Inl, Inr, LabelledGeneric, Lazy, Witness}
+import com.google.cloud.datastore.{Entity, FullEntity, Key, DateTime => GDateTime}
 
 object DatastoreFormats {
 
@@ -95,27 +96,28 @@ object DatastoreFormats {
     key: Witness.Aux[FieldKey],
     propertyConverter: DatastoreProperty[Value, DatastoreValue],
     tailFormat: DatastoreFormat[Remaining]
-  ): DatastoreFormat[FieldType[FieldKey, Value] :: Remaining] = new DatastoreFormat[FieldType[FieldKey, Value] :: Remaining] {
+  ): DatastoreFormat[FieldType[FieldKey, Value] :: Remaining] =
+    new DatastoreFormat[FieldType[FieldKey, Value] :: Remaining] {
 
-    def buildEntity(hlist: FieldType[FieldKey, Value] :: Remaining, e: Entity.Builder): Entity.Builder = {
-      val tailEntity = tailFormat.buildEntity(hlist.tail, e)
-      val fieldName = key.value.name // the name was part of the tagged type
-      propertyConverter.setEntityProperty(hlist.head, fieldName, tailEntity)
-      e
-    }
-
-    def fromEntity(e: FullEntity[Key]): Xor[Throwable, ::[FieldType[FieldKey, Value], Remaining]] = {
-      val fieldName = key.value.name
-      val v = propertyConverter.getValueFromEntity(fieldName, e)
-      val tail = tailFormat.fromEntity(e)
-      tail.flatMap { tail2 =>
-        v.map(v2 =>
-          field[FieldKey](v2) :: tail2
-        )
+      def buildEntity(hlist: FieldType[FieldKey, Value] :: Remaining, e: Entity.Builder): Entity.Builder = {
+        val tailEntity = tailFormat.buildEntity(hlist.tail, e)
+        val fieldName = key.value.name // the name was part of the tagged type
+        propertyConverter.setEntityProperty(hlist.head, fieldName, tailEntity)
+        e
       }
-    }
 
-  }
+      def fromEntity(e: FullEntity[Key]): Xor[Throwable, FieldType[FieldKey, Value] :: Remaining] = {
+        val fieldName = key.value.name
+        val v = propertyConverter.getValueFromEntity(fieldName, e)
+        val tail = tailFormat.fromEntity(e)
+        tail.flatMap { tail2 =>
+          v.map(v2 =>
+            field[FieldKey](v2) :: tail2
+          )
+        }
+      }
+
+    }
 
   /**
    * The following code is what allows us to make the leap from case classes
@@ -138,5 +140,39 @@ object DatastoreFormats {
     }
 
     def buildEntity(t: T, e: Entity.Builder): Entity.Builder = sg.buildEntity(gen.to(t), e)
+  }
+
+  implicit object CNilDatastoreFormat extends DatastoreFormat[CNil] {
+    override def fromEntity(e: FullEntity[Key]): Xor[Throwable, CNil] = ???
+    override def buildEntity(a: CNil, e: Builder): Builder = ???
+  }
+
+  implicit def coproductDatastoreFormat[Name <: Symbol, Head, Tail <: Coproduct](implicit
+    key: Witness.Aux[Name],
+    lazyHeadFormat: Lazy[DatastoreFormat[Head]],
+    lazyTailFormat: Lazy[DatastoreFormat[Tail]]): DatastoreFormat[FieldType[Name, Head] :+: Tail] = new DatastoreFormat[FieldType[Name, Head] :+: Tail] {
+    override def fromEntity(e: FullEntity[Key]): Xor[Throwable, :+:[FieldType[Name, Head], Tail]] = {
+      if (e.getString("type") == key.value.name) {
+        lazyHeadFormat.value.fromEntity(e).map(headResult =>
+          Inl(field[Name](headResult))
+        )
+      } else {
+        lazyTailFormat.value.fromEntity(e).map(tailResult =>
+          Inr(tailResult)
+        )
+      }
+    }
+
+    override def buildEntity(a: :+:[FieldType[Name, Head], Tail], e: Builder): Builder = {
+      a match {
+        case Inl(head) =>
+          val newE: Builder = lazyHeadFormat.value.buildEntity(head, e)
+          newE.set("type", key.value.name)
+          e
+        case Inr(tail) =>
+          lazyTailFormat.value.buildEntity(tail, e)
+      }
+
+    }
   }
 }
