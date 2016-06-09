@@ -10,6 +10,6 @@ libraryDependencies ++= Seq(
 
 enablePlugins(CommonSettingsPlugin)
 enablePlugins(NexusPlugin)
-
+enablePlugins(CoverallsWrapper)
 
 

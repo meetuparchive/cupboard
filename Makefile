@@ -24,7 +24,15 @@ list:
 no_op__:
 
 package-sbt:
-	sbt test:test publishLocal
+	sbt clean \
+	"set coverageEnabled := true" \
+	"set coverageOutputHTML := false" \
+	test \
+	coverageReport \
+	coverallsMaybe \
+	coverageOff \
+	publishLocal \
+	component:test
 
 # We clean the locally cached version
 # of the jar when we're done publishing.
@@ -41,6 +49,7 @@ publish:
 		-v $(CI_IVY_CACHE):/root/.ivy2 \
 		-v $(CI_SBT_CACHE):/root/.sbt \
 		-e VERSION=$(VERSION) \
+		-e COVERALLS_REPO_TOKEN=$(COVERALLS_REPO_TOKEN) \
 		$(BUILDER_TAG) \
 		publish-sbt
 
