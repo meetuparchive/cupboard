@@ -10,6 +10,7 @@ package object models {
   case class Bar(i: Int, f: Foo)
   case class Qux[T](i: Int)
   case class Phantom[T, U](i: Int)
+  case class Many(seq: List[Simple])
   case class Subscription(
     startDate: Option[ZonedDateTime],
     endDate: Option[ZonedDateTime],

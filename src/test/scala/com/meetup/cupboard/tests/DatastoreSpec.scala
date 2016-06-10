@@ -5,7 +5,11 @@ import java.time.{ZoneOffset, ZonedDateTime}
 import org.scalatest._
 import com.meetup.cupboard.models.{Bar, Subscription, _}
 import cats.data.Xor
+import com.google.cloud.datastore.Datastore
 import com.meetup.cupboard.{AdHocDatastore, Cupboard, DatastoreFormats}
+import shapeless.Typeable
+
+import scala.reflect.ClassTag
 
 class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
   import DatastoreFormats._
@@ -79,5 +83,29 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
       }
 
     }
+
+    it("should support classes w/ sequences of a case class as a property") {
+      withDatastore() { ds =>
+        val many = Many(List(Simple("hello"), Simple("world")))
+        testSaveAndLoad(ds, many)
+      }
+    }
+  }
+
+  /**
+   * Utility function that persists and then loads a case class.
+   *
+   * It asserts that the persisted and restored classes are the same.
+   * @param ds Datastore
+   * @param c  case class to be persisted
+   * @param cf implicit DatastoreFormat
+   * @tparam C type of case class
+   */
+  def testSaveAndLoad[C](ds: Datastore, c: C)(implicit cf: DatastoreFormat[C], tag: ClassTag[C], typeable: Typeable[C]) = {
+    val cResult = Cupboard.save[C](ds, c)
+    val cPersisted = cResult.getOrElse(fail())
+    val cRestored = Cupboard.load[C](ds, cPersisted.id)
+    cRestored shouldBe cResult
+    cPersisted.entity shouldBe c
   }
 }

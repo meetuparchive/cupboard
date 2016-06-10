@@ -15,12 +15,12 @@ object DatastoreFormats extends DatastoreProperties {
   /// You may need to refer to the Shapeless documentation to get a good sense of what this is doing.
 
   trait DatastoreFormat[A] {
-    def fromEntity(e: FullEntity[Key]): Xor[Throwable, A]
+    def fromEntity(e: FullEntity[_]): Xor[Throwable, A]
     def buildEntity(a: A, e: Entity.Builder): Entity.Builder
   }
 
   implicit object hNilFormat extends DatastoreFormat[HNil] {
-    def fromEntity(j: FullEntity[Key]) = Xor.Right(HNil)
+    def fromEntity(j: FullEntity[_]) = Xor.Right(HNil)
     def buildEntity(h: HNil, e: Entity.Builder): Entity.Builder = e
   }
 
@@ -39,7 +39,7 @@ object DatastoreFormats extends DatastoreProperties {
         e
       }
 
-      def fromEntity(e: FullEntity[Key]): Xor[Throwable, FieldType[FieldKey, Value] :: Remaining] = {
+      def fromEntity(e: FullEntity[_]): Xor[Throwable, FieldType[FieldKey, Value] :: Remaining] = {
         val fieldName = key.value.name
         val v = propertyConverter.getValueFromEntity(fieldName, e)
         val tail = tailFormat.fromEntity(e)
@@ -67,7 +67,7 @@ object DatastoreFormats extends DatastoreProperties {
   ): DatastoreFormat[T] = new DatastoreFormat[T] {
     val sg = lazySg.value
 
-    def fromEntity(j: FullEntity[Key]): Xor[Throwable, T] = {
+    def fromEntity(j: FullEntity[_]): Xor[Throwable, T] = {
       sg.fromEntity(j)
         .map(gen.from(_))
     }
@@ -76,7 +76,7 @@ object DatastoreFormats extends DatastoreProperties {
   }
 
   implicit object CNilDatastoreFormat extends DatastoreFormat[CNil] {
-    override def fromEntity(e: FullEntity[Key]): Xor[Throwable, CNil] = ???
+    override def fromEntity(e: FullEntity[_]): Xor[Throwable, CNil] = ???
     override def buildEntity(a: CNil, e: Builder): Builder = ???
   }
 
@@ -84,7 +84,7 @@ object DatastoreFormats extends DatastoreProperties {
     key: Witness.Aux[Name],
     lazyHeadFormat: Lazy[DatastoreFormat[Head]],
     lazyTailFormat: Lazy[DatastoreFormat[Tail]]): DatastoreFormat[FieldType[Name, Head] :+: Tail] = new DatastoreFormat[FieldType[Name, Head] :+: Tail] {
-    override def fromEntity(e: FullEntity[Key]): Xor[Throwable, :+:[FieldType[Name, Head], Tail]] = {
+    override def fromEntity(e: FullEntity[_]): Xor[Throwable, :+:[FieldType[Name, Head], Tail]] = {
       if (e.getString("type") == key.value.name) {
         lazyHeadFormat.value.fromEntity(e).map(headResult =>
           Inl(field[Name](headResult))

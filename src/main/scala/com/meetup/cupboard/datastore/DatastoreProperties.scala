@@ -3,37 +3,25 @@ package com.meetup.cupboard.datastore
 import java.time.{Instant, ZoneOffset, ZonedDateTime}
 
 import cats.data.Xor
-import com.google.cloud.datastore.{DateTime, Entity, FullEntity, Key}
+import com.google.cloud.datastore.{DateTime => GDateTime, _}
 import com.meetup.cupboard.DatastoreFormats.DatastoreFormat
-import com.google.cloud.datastore.{Entity, FullEntity, Key, DateTime => GDateTime}
+import com.meetup.cupboard.Result
+
+import scala.collection.JavaConversions._
 
 trait DatastoreProperties {
   /////////
   // DatastoreProperties define how to translate individual values from the case class type to the datastore type.
-  // TODO: Move these to a trait which DatastoreFormats extends.
   /////////
 
   trait DatastoreProperty[V, D] {
-    def getValueFromEntity(fieldName: String, e: FullEntity[Key]): Xor[Throwable, V]
+    def getValueFromEntity(fieldName: String, e: FullEntity[_]): Xor[Throwable, V]
 
     def setEntityProperty(v: V, fieldName: String, e: Entity.Builder): Entity.Builder
   }
 
-  implicit def EntityDatastoreProperty[E](implicit entityDatastoreFormat: DatastoreFormat[E]): DatastoreProperty[E, FullEntity[Key]] =
-    new DatastoreProperty[E, FullEntity[Key]] {
-      def getValueFromEntity(name: String, e: FullEntity[Key]) = {
-        val internalEntity: FullEntity[Key] = e.getEntity(name)
-        entityDatastoreFormat.fromEntity(internalEntity)
-      }
-      def setEntityProperty(v: E, name: String, e: Entity.Builder): Entity.Builder = {
-        val emptyEntity = FullEntity.builder()
-        val newEntity = entityDatastoreFormat.buildEntity(v, e)
-        e.set(name, newEntity.build())
-      }
-    }
-
   implicit object StringDatastoreProperty extends DatastoreProperty[String, String] {
-    def getValueFromEntity(name: String, e: FullEntity[Key]) = {
+    def getValueFromEntity(name: String, e: FullEntity[_]) = {
       Xor.catchNonFatal(e.getString(name))
     }
 
@@ -43,7 +31,7 @@ trait DatastoreProperties {
   }
 
   implicit object IntDatastoreProperty extends DatastoreProperty[Int, Int] {
-    def getValueFromEntity(name: String, e: FullEntity[Key]) = {
+    def getValueFromEntity(name: String, e: FullEntity[_]) = {
       Xor.catchNonFatal(e.getLong(name).toInt)
     }
 
@@ -53,7 +41,7 @@ trait DatastoreProperties {
   }
 
   implicit object ZonedDateTimeDatastoreProperty extends DatastoreProperty[ZonedDateTime, GDateTime] {
-    def getValueFromEntity(name: String, e: FullEntity[Key]) = {
+    def getValueFromEntity(name: String, e: FullEntity[_]) = {
       Xor.catchNonFatal {
         val millis: Long = e.getDateTime(name).timestampMillis()
         ZonedDateTime.from(Instant.ofEpochMilli(millis).atOffset(ZoneOffset.UTC))
@@ -65,7 +53,7 @@ trait DatastoreProperties {
   }
 
   implicit object InstantDatastoreProperty extends DatastoreProperty[Instant, GDateTime] {
-    def getValueFromEntity(name: String, e: FullEntity[Key]) = {
+    def getValueFromEntity(name: String, e: FullEntity[_]) = {
       Xor.catchNonFatal {
         val millis: Long = e.getDateTime(name).timestampMillis()
         Instant.ofEpochMilli(millis)
@@ -73,6 +61,54 @@ trait DatastoreProperties {
     }
     def setEntityProperty(v: Instant, name: String, e: Entity.Builder) = {
       e.set(name, GDateTime.copyFrom(java.util.Date.from(v)))
+    }
+  }
+
+  implicit def EntityDatastoreProperty[E](implicit entityDatastoreFormat: DatastoreFormat[E]): DatastoreProperty[E, FullEntity[_]] =
+    new DatastoreProperty[E, FullEntity[_]] {
+      def getValueFromEntity(name: String, e: FullEntity[_]) = {
+        val internalEntity: FullEntity[_] = e.getEntity(name)
+        entityDatastoreFormat.fromEntity(internalEntity)
+      }
+      def setEntityProperty(v: E, name: String, e: Entity.Builder): Entity.Builder = {
+        val emptyEntity = FullEntity.builder()
+        val newEntity = entityDatastoreFormat.buildEntity(v, e)
+        e.set(name, newEntity.build())
+      }
+    }
+
+  implicit def SeqEntityProperty[E](implicit entityDatastoreFormat: DatastoreFormat[E]): DatastoreProperty[List[E], java.util.List[FullEntity[_]]] = {
+    new DatastoreProperty[List[E], java.util.List[FullEntity[_]]] {
+      def getValueFromEntity(name: String, e: FullEntity[_]) = {
+        val internalEntities: java.util.List[EntityValue] = e.getList[EntityValue](name)
+        val entities = internalEntities.map(e => entityDatastoreFormat.fromEntity(e.get())).toList
+        sequence(entities)
+      }
+
+      def setEntityProperty(v: List[E], name: String, e: Entity.Builder): Entity.Builder = {
+        val entities = v.map { x =>
+          val emptyEntity = FullEntity.builder()
+          val newEntity = entityDatastoreFormat.buildEntity(x, e).build()
+          new EntityValue(newEntity)
+        }
+        //com.google.cloud.datastore.Value.
+        import scala.collection.JavaConversions._
+
+        val entities2 = entities.toBuffer
+        e.set(name, entities2)
+      }
+      import PartialFunction._
+
+      // turn a list of Xors into an Xor of a list
+      def sequence(input: List[Xor[Throwable, E]]): Xor[Throwable, List[E]] = {
+        input.foldRight[Xor[Throwable, List[E]]](Xor.Right(Nil)) { (o, ol) =>
+          (o, ol) match {
+            case (Xor.Right(x), Xor.Right(xs)) => Xor.Right(x :: xs)
+            case (Xor.Left(y), _) => Xor.Left(y)
+            case (_, Xor.Left(z)) => Xor.Left(z)
+          }
+        }
+      }
     }
   }
 
