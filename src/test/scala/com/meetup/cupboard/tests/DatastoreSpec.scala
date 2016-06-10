@@ -86,7 +86,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
 
     it("should support classes w/ sequences of a case class as a property") {
       withDatastore() { ds =>
-        val many = Many(List(Simple("hello"), Simple("world")))
+        val many = Many(List(Simple("hello"), Simple("world"), Simple("foo")))
         testSaveAndLoad(ds, many)
       }
     }
@@ -105,6 +105,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
     val cResult = Cupboard.save[C](ds, c)
     val cPersisted = cResult.getOrElse(fail())
     val cRestored = Cupboard.load[C](ds, cPersisted.id)
+    println(cRestored)
     cRestored shouldBe cResult
     cPersisted.entity shouldBe c
   }
