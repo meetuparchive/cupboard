@@ -9,7 +9,38 @@ import shapeless.{:+:, ::, CNil, Coproduct, HList, HNil, Inl, Inr, LabelledGener
 import com.google.cloud.datastore.{Entity, FullEntity, Key, DateTime => GDateTime}
 import com.meetup.cupboard.datastore.DatastoreProperties
 
-object DatastoreFormats extends DatastoreProperties {
+object DatastoreFormats extends LowPriorityDatastoreFormats {
+
+  implicit def optionDatastoreProperty[A, B](implicit datastoreProperty: DatastoreProperty[A, _]): DatastoreProperty[Option[A], FullEntity[_]] =
+    new DatastoreProperty[Option[A], FullEntity[_]] {
+      def getValueFromEntity(name: String, e: FullEntity[_]): Xor[Throwable, Option[A]] = {
+        Xor.catchNonFatal {
+          val internalEntity: FullEntity[_] = e.getEntity(name)
+          internalEntity.getString("type") match {
+            case "Some" => {
+              val value = datastoreProperty.getValueFromEntity("value", internalEntity)
+              value.toOption
+            }
+            case "None" => None
+          }
+        }
+      }
+
+      def setEntityProperty(v: Option[A], name: String, e: Entity.Builder): Entity.Builder = {
+        val emptyEntity = Entity.builder(e.build().key())
+        v match {
+          case Some(v1) =>
+            emptyEntity.set("type", "Some")
+            datastoreProperty.setEntityProperty(v1, "value", emptyEntity)
+          case None =>
+            emptyEntity.set("type", "None")
+        }
+        e.set(name, emptyEntity.build())
+      }
+    }
+}
+
+class LowPriorityDatastoreFormats extends DatastoreProperties {
 
   /// The following section uses the Shapeless library to allow us to work with case classes in a generic way.
   /// You may need to refer to the Shapeless documentation to get a good sense of what this is doing.
@@ -28,12 +59,13 @@ object DatastoreFormats extends DatastoreProperties {
     implicit
     key: Witness.Aux[FieldKey],
     propertyConverter: DatastoreProperty[Value, DatastoreValue],
-    tailFormat: DatastoreFormat[Remaining]
+    tailFormat: Lazy[DatastoreFormat[Remaining]]
   ): DatastoreFormat[FieldType[FieldKey, Value] :: Remaining] =
     new DatastoreFormat[FieldType[FieldKey, Value] :: Remaining] {
 
       def buildEntity(hlist: FieldType[FieldKey, Value] :: Remaining, e: Entity.Builder): Entity.Builder = {
-        val tailEntity = tailFormat.buildEntity(hlist.tail, e)
+
+        val tailEntity = tailFormat.value.buildEntity(hlist.tail, e)
         val fieldName = key.value.name // the name was part of the tagged type
         propertyConverter.setEntityProperty(hlist.head, fieldName, tailEntity)
         e
@@ -42,7 +74,7 @@ object DatastoreFormats extends DatastoreProperties {
       def fromEntity(e: FullEntity[_]): Xor[Throwable, FieldType[FieldKey, Value] :: Remaining] = {
         val fieldName = key.value.name
         val v = propertyConverter.getValueFromEntity(fieldName, e)
-        val tail = tailFormat.fromEntity(e)
+        val tail = tailFormat.value.fromEntity(e)
         tail.flatMap { tail2 =>
           v.map(v2 =>
             field[FieldKey](v2) :: tail2
@@ -73,39 +105,5 @@ object DatastoreFormats extends DatastoreProperties {
     }
 
     def buildEntity(t: T, e: Entity.Builder): Entity.Builder = sg.buildEntity(gen.to(t), e)
-  }
-
-  implicit object CNilDatastoreFormat extends DatastoreFormat[CNil] {
-    override def fromEntity(e: FullEntity[_]): Xor[Throwable, CNil] = ???
-    override def buildEntity(a: CNil, e: Builder): Builder = ???
-  }
-
-  implicit def coproductDatastoreFormat[Name <: Symbol, Head, Tail <: Coproduct](implicit
-    key: Witness.Aux[Name],
-    lazyHeadFormat: Lazy[DatastoreFormat[Head]],
-    lazyTailFormat: Lazy[DatastoreFormat[Tail]]): DatastoreFormat[FieldType[Name, Head] :+: Tail] = new DatastoreFormat[FieldType[Name, Head] :+: Tail] {
-    override def fromEntity(e: FullEntity[_]): Xor[Throwable, :+:[FieldType[Name, Head], Tail]] = {
-      if (e.getString("type") == key.value.name) {
-        lazyHeadFormat.value.fromEntity(e).map(headResult =>
-          Inl(field[Name](headResult))
-        )
-      } else {
-        lazyTailFormat.value.fromEntity(e).map(tailResult =>
-          Inr(tailResult)
-        )
-      }
-    }
-
-    override def buildEntity(a: :+:[FieldType[Name, Head], Tail], e: Builder): Builder = {
-      a match {
-        case Inl(head) =>
-          val newE: Builder = lazyHeadFormat.value.buildEntity(head, e)
-          newE.set("type", key.value.name)
-          e
-        case Inr(tail) =>
-          lazyTailFormat.value.buildEntity(tail, e)
-      }
-
-    }
   }
 }

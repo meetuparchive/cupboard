@@ -2,6 +2,7 @@ package com.meetup.cupboard
 
 import java.time.ZonedDateTime
 
+import com.meetup.cupboard.models.PlanStatus.PlanStatus
 import spray.json.{JsNumber, JsString, JsValue, JsonFormat}
 
 package object models {
@@ -27,6 +28,23 @@ package object models {
   }
   /* MeetupStatus.OrgSub */
   sealed abstract class SubscriptionStatus(val id: Int)
+
+  case class Plan(
+    name: String,
+    entitlements: Entitlements,
+    status: PlanStatus)
+
+  case class Entitlements(maxGroups: Option[Int], maxUsers: Option[Int])
+
+  //case object BasicEntitlement extends Entitlements(Some(3), Some(50))
+  //case object UnlimitedEntitlement extends Entitlements(Some(3), None)
+  //case object ChapterizerUnlimitedEntitlement extends Entitlements(None, None)
+
+  object PlanStatus {
+    sealed abstract class PlanStatus
+    case object Available extends PlanStatus
+    case object Unavailable extends PlanStatus
+  }
 
   object SubscriptionStatus {
     case object Expired extends SubscriptionStatus(-2)

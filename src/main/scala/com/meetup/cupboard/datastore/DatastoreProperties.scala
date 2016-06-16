@@ -16,6 +16,7 @@ import scala.collection.JavaConversions._
  *   one can apply.
  */
 trait DatastoreProperties extends LowPriorityProperties {
+
   implicit def SeqEntityProperty[E](implicit entityDatastoreFormat: DatastoreFormat[E]): DatastoreProperty[List[E], java.util.List[FullEntity[_]]] = {
     new DatastoreProperty[List[E], java.util.List[FullEntity[_]]] {
       def getValueFromEntity(name: String, e: FullEntity[_]) = {
@@ -36,7 +37,6 @@ trait DatastoreProperties extends LowPriorityProperties {
         val entities2 = entities.toBuffer
         e.set(name, entities2)
       }
-      import PartialFunction._
 
       // turn a list of Xors into an Xor of a list
       def sequence(input: List[Xor[Throwable, E]]): Xor[Throwable, List[E]] = {
@@ -52,7 +52,6 @@ trait DatastoreProperties extends LowPriorityProperties {
 
   }
 }
-
 trait LowPriorityProperties {
 
   trait DatastoreProperty[V, D] {
@@ -115,8 +114,8 @@ trait LowPriorityProperties {
       }
 
       def setEntityProperty(v: E, name: String, e: Entity.Builder): Entity.Builder = {
-        val emptyEntity = FullEntity.builder()
-        val newEntity = entityDatastoreFormat.buildEntity(v, e)
+        val emptyEntity = Entity.builder(e.build().key())
+        val newEntity = entityDatastoreFormat.buildEntity(v, emptyEntity)
         e.set(name, newEntity.build())
       }
     }

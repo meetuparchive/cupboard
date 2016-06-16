@@ -38,13 +38,13 @@ class JsonSpec extends FlatSpec with Matchers {
       notes = "test notes"
     )
     val subscriptionJson = subscription.toJson
-    print(subscriptionJson)
+    //print(subscriptionJson)
     val expected = """{"endDate":null,"renewDate":"2016-05-26T15:55:39.163-04:00[America/New_York]","trialEnd":null,"trialStart":null, "status": 0, "flag":1,"notes":"test notes","startDate":"2016-05-26T15:55:39.163-04:00[America/New_York]"}"""
     subscriptionJson shouldBe expected.parseJson
 
     val q: Qux[Int] = Qux(1)
     val qJson = q.toJson
-    println(qJson)
+    //println(qJson)
     qJson shouldBe """{"i": 1}""".parseJson
 
     val qRestored: Qux[_] = qJson.convertTo[Qux[_]]
@@ -52,7 +52,7 @@ class JsonSpec extends FlatSpec with Matchers {
 
     val phantom: Phantom[Int, String] = Phantom(1)
     val phantomJson = phantom.toJson
-    println(phantomJson)
+    //println(phantomJson)
 
   }
 }

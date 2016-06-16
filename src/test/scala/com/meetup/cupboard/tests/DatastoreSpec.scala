@@ -53,35 +53,15 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
       }
     }
 
-    it("should support sealed families of case classes") {
+    it("should support Option") {
       withDatastore() { ds =>
-        val status = SubscriptionStatus.Active
-
-        val statusResult = Cupboard.save[SubscriptionStatus](ds, status, "SubscriptionStatus")
-        val statusP = statusResult.getOrElse(fail())
-        val statusR = Cupboard.loadKind[SubscriptionStatus](ds, statusP.id, "SubscriptionStatus")
-        statusP.entity.id shouldBe SubscriptionStatus.Active.id
-
-        statusR shouldBe statusResult
+        val e = Entitlements(Some(100), None)
+        val eResult = Cupboard.save(ds, e)
+        println(s"option test: $eResult")
+        val eP = eResult.getOrElse(fail())
+        val eR = Cupboard.load[Entitlements](ds, eP.id + 1)
+        eResult shouldBe eR
       }
-    }
-
-    it("should support sealed families as individual properties") {
-      withDatastore() { ds =>
-        val zdt = ZonedDateTime.now()
-        val now = ZonedDateTime.from(zdt.toInstant().atOffset(ZoneOffset.UTC))
-
-        val subscription = Subscription.empty.copy(
-          startDate = Some(now),
-          renewDate = Some(now),
-          status = SubscriptionStatus.Active)
-        val subscriptionResult = Cupboard.save[Subscription](ds, subscription)
-        val subscriptionP = subscriptionResult.getOrElse(fail())
-        val subscriptionR = Cupboard.load[Subscription](ds, subscriptionP.id)
-        subscriptionR shouldBe subscriptionResult
-
-      }
-
     }
 
     it("should support classes w/ sequences of a case class as a property") {
@@ -96,6 +76,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
    * Utility function that persists and then loads a case class.
    *
    * It asserts that the persisted and restored classes are the same.
+   *
    * @param ds Datastore
    * @param c  case class to be persisted
    * @param cf implicit DatastoreFormat
