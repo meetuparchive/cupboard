@@ -12,6 +12,8 @@ package object models {
   case class Qux[T](i: Int)
   case class Phantom[T, U](i: Int)
   case class Many(seq: List[Simple])
+  case class BigDecimalTest(bd: BigDecimal)
+
   case class Subscription(
     startDate: Option[ZonedDateTime],
     endDate: Option[ZonedDateTime],

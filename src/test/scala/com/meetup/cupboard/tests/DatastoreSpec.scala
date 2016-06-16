@@ -26,6 +26,8 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
         val z1R = Cupboard.loadKind[Foo](ds, z1P.id, "customKind")
         z1Result shouldBe z1R
         z1R.map(_.entity) shouldBe Xor.Right(z)
+
+        testSaveAndLoad(ds, BigDecimalTest(BigDecimal(392.23)))
       }
     }
 
