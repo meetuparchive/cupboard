@@ -6,7 +6,6 @@ import cats.data.Xor
 import com.google.cloud.datastore.{DateTime => GDateTime, _}
 import com.meetup.cupboard.DatastoreFormats.DatastoreFormat
 import com.meetup.cupboard.Result
-
 import scala.collection.JavaConversions._
 
 /**
@@ -77,9 +76,29 @@ trait DatastoreProperties extends LowPriorityProperties {
         }
       }
     }
+  }
 
+  implicit object SeqStringDatastoreProperty extends DatastoreProperty[Seq[String], java.util.List[String]] {
+    def getValueFromEntity(name: String, e: FullEntity[_]) = {
+      Xor.catchNonFatal(e.getList[StringValue](name).map(_.get))
+    }
+
+    def setEntityProperty(v: Seq[String], name: String, e: Entity.Builder): Entity.Builder = {
+      e.set(name, v.map(new StringValue(_)))
+    }
+  }
+
+  implicit object SeqIntDatastoreProperty extends DatastoreProperty[Seq[Int], java.util.List[Int]] {
+    def getValueFromEntity(name: String, e: FullEntity[_]) = {
+      Xor.catchNonFatal(e.getList[LongValue](name).map(_.get.toInt))
+    }
+
+    def setEntityProperty(v: Seq[Int], name: String, e: Entity.Builder): Entity.Builder = {
+      e.set(name, v.map(new LongValue(_)))
+    }
   }
 }
+
 trait LowPriorityProperties {
 
   trait DatastoreProperty[V, D] {

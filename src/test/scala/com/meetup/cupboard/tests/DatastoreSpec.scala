@@ -66,6 +66,13 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
       withDatastore() { ds =>
         val many = Many(List(Simple("hello"), Simple("world"), Simple("foo")))
         testSaveAndLoad(ds, many)
+
+        val seqString = SeqStringTest(Seq("hi", "world", "foo"))
+        testSaveAndLoad(ds, seqString)
+
+        val seqInt = SeqIntTest(Seq(1, 2, 3))
+        testSaveAndLoad(ds, seqInt)
+
       }
     }
 

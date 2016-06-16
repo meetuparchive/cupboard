@@ -13,6 +13,8 @@ package object models {
   case class Phantom[T, U](i: Int)
   case class Many(seq: List[Simple])
   case class BigDecimalTest(bd: BigDecimal)
+  case class SeqStringTest(foo: Seq[String])
+  case class SeqIntTest(foo: Seq[Int])
 
   case class Subscription(
     startDate: Option[ZonedDateTime],
