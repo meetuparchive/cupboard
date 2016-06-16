@@ -30,12 +30,18 @@ case class Bar(i: Int, f: Foo)
 ```
 
 ```scala
+// connect to datastore
+val datastoreOptions = DatastoreOptions.defaultInstance()
+val datastore = datastoreOptions.service()
+
+// persist a case class
 val bar = Bar(2, Foo("hi", 3)
-val persisted = Cupboard.save(ds, e)
+val persisted = Cupboard.save(datastore, bar)
 ```
 
 ```scala
-val result = Cupboard.load(ds, id)
+// load a case class
+val result = Cupboard.load(datastore, barId)
 ```
 
 
