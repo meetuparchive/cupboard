@@ -9,38 +9,7 @@ import shapeless.{:+:, ::, CNil, Coproduct, HList, HNil, Inl, Inr, LabelledGener
 import com.google.cloud.datastore.{Entity, FullEntity, Key, DateTime => GDateTime}
 import com.meetup.cupboard.datastore.DatastoreProperties
 
-object DatastoreFormats extends LowPriorityDatastoreFormats {
-
-  implicit def optionDatastoreProperty[A, B](implicit datastoreProperty: DatastoreProperty[A, _]): DatastoreProperty[Option[A], FullEntity[_]] =
-    new DatastoreProperty[Option[A], FullEntity[_]] {
-      def getValueFromEntity(name: String, e: FullEntity[_]): Xor[Throwable, Option[A]] = {
-        Xor.catchNonFatal {
-          val internalEntity: FullEntity[_] = e.getEntity(name)
-          internalEntity.getString("type") match {
-            case "Some" => {
-              val value = datastoreProperty.getValueFromEntity("value", internalEntity)
-              value.toOption
-            }
-            case "None" => None
-          }
-        }
-      }
-
-      def setEntityProperty(v: Option[A], name: String, e: Entity.Builder): Entity.Builder = {
-        val emptyEntity = Entity.builder(e.build().key())
-        v match {
-          case Some(v1) =>
-            emptyEntity.set("type", "Some")
-            datastoreProperty.setEntityProperty(v1, "value", emptyEntity)
-          case None =>
-            emptyEntity.set("type", "None")
-        }
-        e.set(name, emptyEntity.build())
-      }
-    }
-}
-
-class LowPriorityDatastoreFormats extends DatastoreProperties {
+object DatastoreFormats extends DatastoreProperties {
 
   /// The following section uses the Shapeless library to allow us to work with case classes in a generic way.
   /// You may need to refer to the Shapeless documentation to get a good sense of what this is doing.

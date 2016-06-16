@@ -1,6 +1,6 @@
 package com.meetup.cupboard.tests
 
-import java.time.{ZoneOffset, ZonedDateTime}
+import java.time.{Period, ZoneOffset, ZonedDateTime}
 
 import org.scalatest._
 import com.meetup.cupboard.models.{Bar, Subscription, _}
@@ -22,9 +22,6 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
 
         val z1Result = Cupboard.save(ds, z, "customKind")
 
-        if (z1Result.isLeft) {
-          println("z1Result is left")
-        }
         val z1P = z1Result.getOrElse(fail())
         val z1R = Cupboard.loadKind[Foo](ds, z1P.id, "customKind")
         z1Result shouldBe z1R
@@ -57,9 +54,8 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
       withDatastore() { ds =>
         val e = Entitlements(Some(100), None)
         val eResult = Cupboard.save(ds, e)
-        println(s"option test: $eResult")
         val eP = eResult.getOrElse(fail())
-        val eR = Cupboard.load[Entitlements](ds, eP.id + 1)
+        val eR = Cupboard.load[Entitlements](ds, eP.id)
         eResult shouldBe eR
       }
     }
@@ -68,6 +64,13 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
       withDatastore() { ds =>
         val many = Many(List(Simple("hello"), Simple("world"), Simple("foo")))
         testSaveAndLoad(ds, many)
+      }
+    }
+
+    it("should support classes w/ Period properties") {
+      withDatastore() { ds =>
+        val trialPeriod = TrialPeriod(Period.of(1, 2, 3))
+        testSaveAndLoad(ds, trialPeriod)
       }
     }
   }
@@ -86,7 +89,6 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
     val cResult = Cupboard.save[C](ds, c)
     val cPersisted = cResult.getOrElse(fail())
     val cRestored = Cupboard.load[C](ds, cPersisted.id)
-    println(cRestored)
     cRestored shouldBe cResult
     cPersisted.entity shouldBe c
   }

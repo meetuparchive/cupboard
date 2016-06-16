@@ -1,6 +1,6 @@
 package com.meetup.cupboard
 
-import java.time.ZonedDateTime
+import java.time.{Period, ZonedDateTime}
 
 import com.meetup.cupboard.models.PlanStatus.PlanStatus
 import spray.json.{JsNumber, JsString, JsValue, JsonFormat}
@@ -22,6 +22,9 @@ package object models {
     notes: String,
     flag: Int
   )
+
+  case class TrialPeriod(p: Period)
+
   object Subscription {
     val empty = Subscription(None, None, None, None, None, SubscriptionStatus.New, "", 0)
     //val empty = Subscription(None, None, None, None, None, "", 0)

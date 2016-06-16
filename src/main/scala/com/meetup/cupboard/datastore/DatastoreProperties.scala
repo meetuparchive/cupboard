@@ -1,6 +1,6 @@
 package com.meetup.cupboard.datastore
 
-import java.time.{Instant, ZoneOffset, ZonedDateTime}
+import java.time.{Instant, Period, ZoneOffset, ZonedDateTime}
 
 import cats.data.Xor
 import com.google.cloud.datastore.{DateTime => GDateTime, _}
@@ -16,6 +16,34 @@ import scala.collection.JavaConversions._
  *   one can apply.
  */
 trait DatastoreProperties extends LowPriorityProperties {
+
+  implicit def optionDatastoreProperty[A, B](implicit datastoreProperty: DatastoreProperty[A, _]): DatastoreProperty[Option[A], FullEntity[_]] =
+    new DatastoreProperty[Option[A], FullEntity[_]] {
+      def getValueFromEntity(name: String, e: FullEntity[_]): Xor[Throwable, Option[A]] = {
+        Xor.catchNonFatal {
+          val internalEntity: FullEntity[_] = e.getEntity(name)
+          internalEntity.getString("type") match {
+            case "Some" => {
+              val value = datastoreProperty.getValueFromEntity("value", internalEntity)
+              value.toOption
+            }
+            case "None" => None
+          }
+        }
+      }
+
+      def setEntityProperty(v: Option[A], name: String, e: Entity.Builder): Entity.Builder = {
+        val emptyEntity = Entity.builder(e.build().key())
+        v match {
+          case Some(v1) =>
+            emptyEntity.set("type", "Some")
+            datastoreProperty.setEntityProperty(v1, "value", emptyEntity)
+          case None =>
+            emptyEntity.set("type", "None")
+        }
+        e.set(name, emptyEntity.build())
+      }
+    }
 
   implicit def SeqEntityProperty[E](implicit entityDatastoreFormat: DatastoreFormat[E]): DatastoreProperty[List[E], java.util.List[FullEntity[_]]] = {
     new DatastoreProperty[List[E], java.util.List[FullEntity[_]]] {
@@ -119,4 +147,26 @@ trait LowPriorityProperties {
         e.set(name, newEntity.build())
       }
     }
+
+  implicit object periodDatastoreProperty extends DatastoreProperty[Period, FullEntity[_]] {
+    def getValueFromEntity(name: String, e: FullEntity[_]): Xor[Throwable, Period] = {
+      Xor.catchNonFatal {
+        val internalEntity: FullEntity[_] = e.getEntity(name)
+        val years = internalEntity.getLong("y").toInt
+        val months = internalEntity.getLong("m").toInt
+        val days = internalEntity.getLong("d").toInt
+        Period.of(years, months, days)
+      }
+    }
+
+    def setEntityProperty(v: Period, name: String, e: Entity.Builder): Entity.Builder = {
+      val newEntity = Entity.builder(e.build().key())
+      newEntity.set("y", v.getYears)
+      newEntity.set("m", v.getMonths)
+      newEntity.set("d", v.getDays)
+      e.set(name, newEntity.build())
+    }
+
+  }
+
 }
