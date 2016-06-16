@@ -9,7 +9,7 @@ This library will persist Scala case classes to Google Cloud Datastore.
 There are some restrictions to the case classes that it currently supports.
 
 It supports classes with the following types of fields:
-* `Int`, `Long`, `String`, `Boolean`
+* `Int`, `Long`, `String`, `Boolean`, `BigDecimal`
 * `java.time.Instant`, `java.time.ZonedDateTime`, `java.time.Period`
 * other case classes
 * `List` of the above

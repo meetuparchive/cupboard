@@ -186,7 +186,15 @@ trait LowPriorityProperties {
       newEntity.set("d", v.getDays)
       e.set(name, newEntity.build())
     }
-
   }
 
+  implicit object BigDecimalDatastoreProperty extends DatastoreProperty[BigDecimal, Double] {
+    def getValueFromEntity(name: String, e: FullEntity[_]) = {
+      Xor.catchNonFatal(BigDecimal.apply(e.getDouble(name)))
+    }
+
+    def setEntityProperty(v: BigDecimal, name: String, e: Entity.Builder) = {
+      e.set(name, v.toDouble)
+    }
+  }
 }
