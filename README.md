@@ -4,4 +4,45 @@
 
 "library making it easier, safer, and less boilerplatey to store and retrieve models from GCD"
 
+This library will persist Scala case classes to Google Cloud Datastore.
+
+There are some restrictions to the case classes that it currently supports.
+
+It supports classes with the following types of fields:
+* `Int`, `Long`, `String`, `Boolean`, `BigDecimal`
+* `java.time.Instant`, `java.time.ZonedDateTime`, `java.time.Period`
+* other case classes
+* `List` of the above
+
+It currently does not support abstract types (e.g. Enum-style case classes that implement a sealed trait), but
+that's a desired future feature.
+
+It's possible to add support for other column types or custom handling for a given class.
+(An example should go here.)
+
+### Sample Usage
+
+```scala
+package com.meetup.foo.models
+
+case class Foo(s: String, i: Int)
+case class Bar(i: Int, f: Foo)
+```
+
+```scala
+// connect to datastore
+val datastoreOptions = DatastoreOptions.defaultInstance()
+val datastore = datastoreOptions.service()
+
+// persist a case class
+val bar = Bar(2, Foo("hi", 3)
+val persisted = Cupboard.save(datastore, bar)
+```
+
+```scala
+// load a case class
+val result = Cupboard.load(datastore, barId)
+```
+
+
 

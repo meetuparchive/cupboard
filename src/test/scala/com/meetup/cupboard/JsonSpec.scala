@@ -12,19 +12,19 @@ class JsonSpec extends FlatSpec with Matchers {
   "JsonFormats" should "serialize & deserialize case classes" in {
     // serialize
 
-    val foo1 = Foo("foo", 1)
+    val foo1 = Foo("foo", 1, true)
     val fooJson = foo1.toJson
     println(fooJson)
-    fooJson shouldBe """{"i":1,"s":"foo"}""".parseJson
+    fooJson shouldBe """{"b":true,"i":1,"s":"foo"}""".parseJson
 
     // deserialize
     val foo1restored = fooJson.convertTo[Foo]
     foo1restored shouldBe foo1
 
     // nested case class example
-    val bar1 = Bar(3, Foo("foo", 2))
+    val bar1 = Bar(3, Foo("foo", 2, true))
     val barJson = bar1.toJson
-    barJson shouldBe """{"f":{"i":2,"s":"foo"},"i":3}""".parseJson
+    barJson shouldBe """{"f":{"b":true,"i":2,"s":"foo"},"i":3}""".parseJson
     val bar1restored = barJson.convertTo[Bar]
     bar1restored shouldBe bar1
 
@@ -38,13 +38,13 @@ class JsonSpec extends FlatSpec with Matchers {
       notes = "test notes"
     )
     val subscriptionJson = subscription.toJson
-    print(subscriptionJson)
+    //print(subscriptionJson)
     val expected = """{"endDate":null,"renewDate":"2016-05-26T15:55:39.163-04:00[America/New_York]","trialEnd":null,"trialStart":null, "status": 0, "flag":1,"notes":"test notes","startDate":"2016-05-26T15:55:39.163-04:00[America/New_York]"}"""
     subscriptionJson shouldBe expected.parseJson
 
     val q: Qux[Int] = Qux(1)
     val qJson = q.toJson
-    println(qJson)
+    //println(qJson)
     qJson shouldBe """{"i": 1}""".parseJson
 
     val qRestored: Qux[_] = qJson.convertTo[Qux[_]]
@@ -52,7 +52,7 @@ class JsonSpec extends FlatSpec with Matchers {
 
     val phantom: Phantom[Int, String] = Phantom(1)
     val phantomJson = phantom.toJson
-    println(phantomJson)
+    //println(phantomJson)
 
   }
 }

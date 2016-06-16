@@ -1,15 +1,21 @@
 package com.meetup.cupboard
 
-import java.time.ZonedDateTime
+import java.time.{Period, ZonedDateTime}
 
+import com.meetup.cupboard.models.PlanStatus.PlanStatus
 import spray.json.{JsNumber, JsString, JsValue, JsonFormat}
 
 package object models {
   case class Simple(s: String)
-  case class Foo(s: String, i: Int)
+  case class Foo(s: String, i: Int, b: Boolean)
   case class Bar(i: Int, f: Foo)
   case class Qux[T](i: Int)
   case class Phantom[T, U](i: Int)
+  case class Many(seq: List[Simple])
+  case class BigDecimalTest(bd: BigDecimal)
+  case class SeqStringTest(foo: Seq[String])
+  case class SeqIntTest(foo: Seq[Int])
+
   case class Subscription(
     startDate: Option[ZonedDateTime],
     endDate: Option[ZonedDateTime],
@@ -20,12 +26,32 @@ package object models {
     notes: String,
     flag: Int
   )
+
+  case class TrialPeriod(p: Period)
+
   object Subscription {
     val empty = Subscription(None, None, None, None, None, SubscriptionStatus.New, "", 0)
     //val empty = Subscription(None, None, None, None, None, "", 0)
   }
   /* MeetupStatus.OrgSub */
   sealed abstract class SubscriptionStatus(val id: Int)
+
+  case class Plan(
+    name: String,
+    entitlements: Entitlements,
+    status: PlanStatus)
+
+  case class Entitlements(maxGroups: Option[Long], maxUsers: Option[Int])
+
+  //case object BasicEntitlement extends Entitlements(Some(3), Some(50))
+  //case object UnlimitedEntitlement extends Entitlements(Some(3), None)
+  //case object ChapterizerUnlimitedEntitlement extends Entitlements(None, None)
+
+  object PlanStatus {
+    sealed abstract class PlanStatus
+    case object Available extends PlanStatus
+    case object Unavailable extends PlanStatus
+  }
 
   object SubscriptionStatus {
     case object Expired extends SubscriptionStatus(-2)
