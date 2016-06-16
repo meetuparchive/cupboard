@@ -12,19 +12,19 @@ class JsonSpec extends FlatSpec with Matchers {
   "JsonFormats" should "serialize & deserialize case classes" in {
     // serialize
 
-    val foo1 = Foo("foo", 1)
+    val foo1 = Foo("foo", 1, true)
     val fooJson = foo1.toJson
     println(fooJson)
-    fooJson shouldBe """{"i":1,"s":"foo"}""".parseJson
+    fooJson shouldBe """{"b":true,"i":1,"s":"foo"}""".parseJson
 
     // deserialize
     val foo1restored = fooJson.convertTo[Foo]
     foo1restored shouldBe foo1
 
     // nested case class example
-    val bar1 = Bar(3, Foo("foo", 2))
+    val bar1 = Bar(3, Foo("foo", 2, true))
     val barJson = bar1.toJson
-    barJson shouldBe """{"f":{"i":2,"s":"foo"},"i":3}""".parseJson
+    barJson shouldBe """{"f":{"b":true,"i":2,"s":"foo"},"i":3}""".parseJson
     val bar1restored = barJson.convertTo[Bar]
     bar1restored shouldBe bar1
 

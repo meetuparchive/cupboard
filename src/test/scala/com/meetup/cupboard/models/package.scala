@@ -7,7 +7,7 @@ import spray.json.{JsNumber, JsString, JsValue, JsonFormat}
 
 package object models {
   case class Simple(s: String)
-  case class Foo(s: String, i: Int)
+  case class Foo(s: String, i: Int, b: Boolean)
   case class Bar(i: Int, f: Foo)
   case class Qux[T](i: Int)
   case class Phantom[T, U](i: Int)
@@ -37,7 +37,7 @@ package object models {
     entitlements: Entitlements,
     status: PlanStatus)
 
-  case class Entitlements(maxGroups: Option[Int], maxUsers: Option[Int])
+  case class Entitlements(maxGroups: Option[Long], maxUsers: Option[Int])
 
   //case object BasicEntitlement extends Entitlements(Some(3), Some(50))
   //case object UnlimitedEntitlement extends Entitlements(Some(3), None)

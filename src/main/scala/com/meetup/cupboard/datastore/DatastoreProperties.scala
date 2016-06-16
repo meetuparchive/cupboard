@@ -108,6 +108,16 @@ trait LowPriorityProperties {
     }
   }
 
+  implicit object LongDatastoreProperty extends DatastoreProperty[Long, Long] {
+    def getValueFromEntity(name: String, e: FullEntity[_]) = {
+      Xor.catchNonFatal(e.getLong(name))
+    }
+
+    def setEntityProperty(v: Long, name: String, e: Entity.Builder) = {
+      e.set(name, v)
+    }
+  }
+
   implicit object ZonedDateTimeDatastoreProperty extends DatastoreProperty[ZonedDateTime, GDateTime] {
     def getValueFromEntity(name: String, e: FullEntity[_]) = {
       Xor.catchNonFatal {
@@ -147,6 +157,16 @@ trait LowPriorityProperties {
         e.set(name, newEntity.build())
       }
     }
+
+  implicit object BooleanDatastoreProperty extends DatastoreProperty[Boolean, Boolean] {
+    def getValueFromEntity(name: String, e: FullEntity[_]) = {
+      Xor.catchNonFatal(e.getBoolean(name))
+    }
+
+    def setEntityProperty(v: Boolean, name: String, e: Entity.Builder) = {
+      e.set(name, v)
+    }
+  }
 
   implicit object periodDatastoreProperty extends DatastoreProperty[Period, FullEntity[_]] {
     def getValueFromEntity(name: String, e: FullEntity[_]): Xor[Throwable, Period] = {

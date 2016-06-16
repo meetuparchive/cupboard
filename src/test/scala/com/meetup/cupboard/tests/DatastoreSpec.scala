@@ -15,7 +15,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
   import DatastoreFormats._
 
   describe("DatastoreFormats") {
-    val z = Foo("hi", 3)
+    val z = Foo("hi", 3, true)
 
     it("should serialize and deserialize simple case classes") {
       withDatastore() { ds =>
@@ -40,7 +40,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
         z2Result shouldBe z2R
         z2R.map(_.entity) shouldBe Xor.Right(z)
 
-        val bar = Bar(1, Foo("hi", 4))
+        val bar = Bar(1, Foo("hi", 4, false))
         val barResult = Cupboard.save(ds, bar)
         val barP = barResult.getOrElse(fail())
 
