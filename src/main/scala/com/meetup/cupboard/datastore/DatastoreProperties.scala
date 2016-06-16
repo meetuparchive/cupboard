@@ -190,20 +190,13 @@ trait LowPriorityProperties {
   implicit object periodDatastoreProperty extends DatastoreProperty[Period, FullEntity[_]] {
     def getValueFromEntity(name: String, e: FullEntity[_]): Xor[Throwable, Period] = {
       Xor.catchNonFatal {
-        val internalEntity: FullEntity[_] = e.getEntity(name)
-        val years = internalEntity.getLong("y").toInt
-        val months = internalEntity.getLong("m").toInt
-        val days = internalEntity.getLong("d").toInt
-        Period.of(years, months, days)
+        val periodString = e.getString(name)
+        Period.parse(periodString)
       }
     }
 
     def setEntityProperty(v: Period, name: String, e: Entity.Builder): Entity.Builder = {
-      val newEntity = Entity.builder(e.build().key())
-      newEntity.set("y", v.getYears)
-      newEntity.set("m", v.getMonths)
-      newEntity.set("d", v.getDays)
-      e.set(name, newEntity.build())
+      e.set(name, v.toString)
     }
   }
 
