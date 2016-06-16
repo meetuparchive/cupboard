@@ -82,6 +82,14 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
         testSaveAndLoad(ds, trialPeriod)
       }
     }
+
+    it("should support classes w/ ZonedDateTime properties") {
+      withDatastore() { ds =>
+        val now = ZonedDateTime.now()
+        val zdtt = ZonedDateTimeTest(now)
+        testSaveAndLoad(ds, zdtt)
+      }
+    }
   }
 
   /**

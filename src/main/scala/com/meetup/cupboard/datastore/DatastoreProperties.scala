@@ -1,5 +1,6 @@
 package com.meetup.cupboard.datastore
 
+import java.time.format.DateTimeFormatter
 import java.time.{Instant, Period, ZoneOffset, ZonedDateTime}
 
 import cats.data.Xor
@@ -138,15 +139,17 @@ trait LowPriorityProperties {
   }
 
   implicit object ZonedDateTimeDatastoreProperty extends DatastoreProperty[ZonedDateTime, GDateTime] {
+
+    val formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME
+
     def getValueFromEntity(name: String, e: FullEntity[_]) = {
       Xor.catchNonFatal {
-        val millis: Long = e.getDateTime(name).timestampMillis()
-        ZonedDateTime.from(Instant.ofEpochMilli(millis).atOffset(ZoneOffset.UTC))
+        ZonedDateTime.parse(e.getString(name), formatter)
       }
     }
 
     def setEntityProperty(v: ZonedDateTime, name: String, e: Entity.Builder) = {
-      e.set(name, GDateTime.copyFrom(java.util.Date.from(v.toInstant())))
+      e.set(name, v.format(formatter))
     }
   }
 

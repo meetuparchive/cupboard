@@ -15,6 +15,7 @@ package object models {
   case class BigDecimalTest(bd: BigDecimal)
   case class SeqStringTest(foo: Seq[String])
   case class SeqIntTest(foo: Seq[Int])
+  case class ZonedDateTimeTest(d: ZonedDateTime)
 
   case class Subscription(
     startDate: Option[ZonedDateTime],
