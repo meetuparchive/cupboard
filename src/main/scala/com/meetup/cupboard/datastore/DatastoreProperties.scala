@@ -149,7 +149,7 @@ trait LowPriorityProperties {
     }
 
     def setEntityProperty(v: ZonedDateTime, name: String, e: Entity.Builder) = {
-      e.set(name, v.format(formatter))
+      e.set(name, formatter.format(v))
     }
   }
 
