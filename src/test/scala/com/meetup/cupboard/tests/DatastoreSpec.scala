@@ -28,6 +28,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
         z1R.map(_.entity) shouldBe Xor.Right(z)
 
         testSaveAndLoad(ds, BigDecimalTest(BigDecimal(392.23)))
+
       }
     }
 
@@ -59,6 +60,13 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
         val eP = eResult.getOrElse(fail())
         val eR = Cupboard.load[Entitlements](ds, eP.id)
         eResult shouldBe eR
+
+        val e2 = Entitlements(None, Some(400))
+        val e2Result = Cupboard.update(ds, e2, eP.id)
+        val e2P = e2Result.getOrElse(fail())
+        val e2R = Cupboard.load[Entitlements](ds, eP.id)
+        e2Result shouldBe e2R
+        eResult should not be e2R
       }
     }
 
