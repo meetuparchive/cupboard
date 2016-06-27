@@ -64,9 +64,17 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
         val e2 = Entitlements(None, Some(400))
         val e2Result = Cupboard.update(ds, e2, eP.id)
         val e2P = e2Result.getOrElse(fail())
+
         val e2R = Cupboard.load[Entitlements](ds, eP.id)
-        e2Result shouldBe e2R
-        eResult should not be e2R
+
+        e2R.toOption match {
+          case Some(p) => {
+            p.entity shouldBe e2P.entity
+            p.created shouldBe e2P.created
+            // p.modified should not be e2P.modified
+          }
+          case None => fail()
+        }
       }
     }
 
