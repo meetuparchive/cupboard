@@ -107,6 +107,36 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
       }
     }
 
+    it("should support sealed families of case classes") {
+      withDatastore() { ds =>
+        val status = SubscriptionStatus.Active
+
+        val statusResult = Cupboard.save[SubscriptionStatus](ds, status, "SubscriptionStatus")
+        val statusP = statusResult.getOrElse(fail())
+        val statusR = Cupboard.loadKind[SubscriptionStatus](ds, statusP.id, "SubscriptionStatus")
+        statusP.entity.id shouldBe SubscriptionStatus.Active.id
+
+        statusR shouldBe statusResult
+      }
+    }
+
+    it("should support sealed families as individual properties") {
+      withDatastore() { ds =>
+        val zdt = ZonedDateTime.now()
+        val now = ZonedDateTime.from(zdt.toInstant().atOffset(ZoneOffset.UTC))
+
+        val subscription = Subscription.empty.copy(
+          startDate = Some(now),
+          renewDate = Some(now),
+          status = SubscriptionStatus.Active)
+        val subscriptionResult = Cupboard.save[Subscription](ds, subscription)
+        val subscriptionP = subscriptionResult.getOrElse(fail())
+        val subscriptionR = Cupboard.load[Subscription](ds, subscriptionP.id)
+        subscriptionR shouldBe subscriptionResult
+
+      }
+    }
+
     it("should support custom keys") {
       withDatastore() { ds =>
         val z = Foo("hi", 3, true)
