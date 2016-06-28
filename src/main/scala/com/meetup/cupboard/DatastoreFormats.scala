@@ -78,10 +78,25 @@ object DatastoreFormats extends DatastoreProperties {
     def buildEntity(t: T, e: Entity.Builder): Entity.Builder = sg.buildEntity(gen.to(t), e)
   }
 
+  /**
+   * CNil needs to exist, but should never actually be used in normal execution.
+   *
+   * The typeclass instance below iterates through each possible subtype -- if we've
+   * reached here, it means we've found something unexpected.
+   */
   implicit object CNilDatastoreFormat extends DatastoreFormat[CNil] {
-    override def fromEntity(e: FullEntity[_]): Xor[Throwable, CNil] = ???
+    // If this executes, it means that the "type" saved with the entity doesn't
+    // match one of our known subtypes -- e.g. one of the subtypes was removed from the
+    // code but instances are still persisted.
+    override def fromEntity(e: FullEntity[_]): Xor[Throwable, CNil] = {
+      val typ = e.getString("type")
+      Xor.Left(
+        new Exception(s"$typ is not a known subclass of this abstract trait.")
+      )
+    }
 
-    override def buildEntity(a: CNil, e: Builder): Builder = ???
+    // This should never execute.
+    override def buildEntity(a: CNil, e: Builder): Builder = e
   }
 
   implicit def coproductDatastoreFormat[Name <: Symbol, Head, Tail <: Coproduct](implicit
