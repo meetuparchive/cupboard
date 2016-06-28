@@ -123,10 +123,8 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
           startDate = Some(now),
           renewDate = Some(now),
           status = SubscriptionStatus.Active)
-        val subscriptionResult = Cupboard.save[Subscription](ds, subscription)
-        val subscriptionP = subscriptionResult.getOrElse(fail())
-        val subscriptionR = Cupboard.load[Subscription](ds, subscriptionP.id)
-        subscriptionR shouldBe subscriptionResult
+
+        testSaveAndLoad[Subscription](ds, subscription)
 
       }
     }
