@@ -86,5 +86,13 @@ package object models {
     }
   }
 
+  sealed abstract class RenewalDuration(val period: Period)
+
+  object RenewalDuration {
+    case object MonthlyRenewal extends RenewalDuration(Period.ofMonths(1))
+    case object DailyRenewal extends RenewalDuration(Period.ofDays(1))
+    case object SixMonthsRenewal extends RenewalDuration(Period.ofMonths(6))
+  }
+
 }
 
