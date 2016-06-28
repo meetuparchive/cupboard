@@ -16,11 +16,13 @@ object DatastoreFormats extends DatastoreProperties {
 
   trait DatastoreFormat[A] {
     def fromEntity(e: FullEntity[_]): Xor[Throwable, A]
+
     def buildEntity(a: A, e: Entity.Builder): Entity.Builder
   }
 
   implicit object hNilFormat extends DatastoreFormat[HNil] {
     def fromEntity(j: FullEntity[_]) = Xor.Right(HNil)
+
     def buildEntity(h: HNil, e: Entity.Builder): Entity.Builder = e
   }
 
@@ -75,4 +77,40 @@ object DatastoreFormats extends DatastoreProperties {
 
     def buildEntity(t: T, e: Entity.Builder): Entity.Builder = sg.buildEntity(gen.to(t), e)
   }
+
+  implicit object CNilDatastoreFormat extends DatastoreFormat[CNil] {
+    override def fromEntity(e: FullEntity[_]): Xor[Throwable, CNil] = ???
+
+    override def buildEntity(a: CNil, e: Builder): Builder = ???
+  }
+
+  implicit def coproductDatastoreFormat[Name <: Symbol, Head, Tail <: Coproduct](implicit
+    key: Witness.Aux[Name],
+    lazyHeadFormat: Lazy[DatastoreFormat[Head]],
+    lazyTailFormat: Lazy[DatastoreFormat[Tail]]): DatastoreFormat[FieldType[Name, Head] :+: Tail] = new DatastoreFormat[FieldType[Name, Head] :+: Tail] {
+    override def fromEntity(e: FullEntity[_]): Xor[Throwable, :+:[FieldType[Name, Head], Tail]] = {
+      if (e.getString("type") == key.value.name) {
+        lazyHeadFormat.value.fromEntity(e).map(headResult =>
+          Inl(field[Name](headResult))
+        )
+      } else {
+        lazyTailFormat.value.fromEntity(e).map(tailResult =>
+          Inr(tailResult)
+        )
+      }
+    }
+
+    override def buildEntity(a: :+:[FieldType[Name, Head], Tail], e: Builder): Builder = {
+      a match {
+        case Inl(head) =>
+          val newE: Builder = lazyHeadFormat.value.buildEntity(head, e)
+          newE.set("type", key.value.name)
+          e
+        case Inr(tail) =>
+          lazyTailFormat.value.buildEntity(tail, e)
+      }
+
+    }
+  }
 }
+
