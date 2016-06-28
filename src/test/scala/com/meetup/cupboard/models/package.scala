@@ -96,13 +96,6 @@ package object models {
     case object MonthlyRenewal extends RenewalDuration(Period.ofMonths(1))
     case object DailyRenewal extends RenewalDuration(Period.ofDays(1))
     case object SixMonthsRenewal extends RenewalDuration(Period.ofMonths(6))
-//    import shapeless.labelled._
-    //import shapeless.{:+:, ::, CNil, Coproduct, HList, HNil, Inl, Inr, LabelledGeneric, Lazy, Witness}
-
-    /*implicit val datastoreFormat = new DatastoreFormat[RenewalDuration] {
-      override def fromEntity(e: FullEntity[_]): Xor[Throwable, RenewalDuration] = ???
-      override def buildEntity(a: RenewalDuration, e: Builder): Builder = ???
-    }*/
   }
 
 }
