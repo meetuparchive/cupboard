@@ -109,12 +109,12 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
 
     it("should support sealed families of case classes") {
       withDatastore() { ds =>
-        val status = SubscriptionStatus.Active
+        val status = SubscriptionStatus.Expired
 
         val statusResult = Cupboard.save[SubscriptionStatus](ds, status, "SubscriptionStatus")
         val statusP = statusResult.getOrElse(fail())
         val statusR = Cupboard.loadKind[SubscriptionStatus](ds, statusP.id, "SubscriptionStatus")
-        statusP.entity.id shouldBe SubscriptionStatus.Active.id
+        statusP.entity.id shouldBe SubscriptionStatus.Expired.id
 
         statusR shouldBe statusResult
       }
