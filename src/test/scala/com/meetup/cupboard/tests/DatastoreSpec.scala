@@ -106,6 +106,19 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
         testSaveAndLoad(ds, zdtt)
       }
     }
+
+    it("should support custom keys") {
+      withDatastore() { ds =>
+        val z = Foo("hi", 3, true)
+        val key = Cupboard.getKey(ds, "Foo")
+        val zResult = Cupboard.saveWithKey[Foo](ds, z, key)
+        assert(zResult.isRight)
+        val zP = zResult.getOrElse(fail())
+        val z2R = Cupboard.loadKind[Foo](ds, zP.id, "Foo")
+        zResult shouldBe z2R
+        z2R.map(_.entity) shouldBe Xor.Right(z)
+      }
+    }
   }
 
   /**
