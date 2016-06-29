@@ -107,6 +107,28 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
       }
     }
 
+    it("should support sealed families of case classes") {
+      withDatastore() { ds =>
+        testSaveAndLoad[SubscriptionStatus](ds, SubscriptionStatus.Expired)
+        testSaveAndLoad[RenewalDuration](ds, RenewalDuration.MonthlyRenewal)
+      }
+    }
+
+    it("should support sealed families as individual properties") {
+      withDatastore() { ds =>
+        val zdt = ZonedDateTime.now()
+        val now = ZonedDateTime.from(zdt.toInstant().atOffset(ZoneOffset.UTC))
+
+        val subscription = Subscription.empty.copy(
+          startDate = Some(now),
+          renewDate = Some(now),
+          status = SubscriptionStatus.Active)
+
+        testSaveAndLoad[Subscription](ds, subscription)
+
+      }
+    }
+
     it("should support custom keys") {
       withDatastore() { ds =>
         val z = Foo("hi", 3, true)
@@ -119,6 +141,7 @@ class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
         z2R.map(_.entity) shouldBe Xor.Right(z)
       }
     }
+
   }
 
   /**
