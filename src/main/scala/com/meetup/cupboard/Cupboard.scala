@@ -5,9 +5,9 @@ import java.time.Instant
 import cats.data.Xor
 import com.google.cloud.datastore.Entity.Builder
 import com.google.cloud.datastore.{Datastore, Entity, Key, ReadOption}
-import com.meetup.cupboard.DatastoreFormats.{DatastoreFormat, InstantDatastoreProperty}
 import shapeless.Typeable
 
+import com.meetup.cupboard.datastore.DatastoreProperties.InstantDatastoreProperty
 import scala.reflect.ClassTag
 
 object Cupboard {

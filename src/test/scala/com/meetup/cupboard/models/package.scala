@@ -5,7 +5,6 @@ import java.time.{Period, ZonedDateTime}
 import cats.data.Xor
 import com.google.cloud.datastore.Entity.Builder
 import com.google.cloud.datastore.FullEntity
-import com.meetup.cupboard.DatastoreFormats.DatastoreFormat
 import com.meetup.cupboard.models.PlanStatus.PlanStatus
 import spray.json.{JsNumber, JsString, JsValue, JsonFormat}
 

@@ -6,14 +6,15 @@ import org.scalatest._
 import com.meetup.cupboard.models.{Bar, Subscription, _}
 import cats.data.Xor
 import com.google.cloud.datastore.Datastore
-import com.meetup.cupboard.{AdHocDatastore, Cupboard, DatastoreFormats}
+import com.meetup.cupboard.{AdHocDatastore, Cupboard}
+import com.meetup.cupboard.Cupboard
+import com.meetup.cupboard.datastore.shapeless.DatastoreFormats._
+import com.meetup.cupboard.DatastoreFormat
 import shapeless.Typeable
 
 import scala.reflect.ClassTag
 
 class DatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
-  import DatastoreFormats._
-
   describe("DatastoreFormats") {
     val z = Foo("hi", 3, true)
 
