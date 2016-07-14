@@ -12,4 +12,3 @@ enablePlugins(CommonSettingsPlugin)
 enablePlugins(NexusPlugin)
 enablePlugins(CoverallsWrapper)
 
-

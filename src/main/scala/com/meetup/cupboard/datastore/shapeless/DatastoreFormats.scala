@@ -1,24 +1,17 @@
-package com.meetup.cupboard
-
-import java.time.{Instant, ZoneOffset, ZonedDateTime}
+package com.meetup.cupboard.datastore.shapeless
 
 import cats.data.Xor
 import com.google.cloud.datastore.Entity.Builder
+import com.google.cloud.datastore.{Entity, FullEntity}
+import com.meetup.cupboard.DatastoreFormat
+import com.meetup.cupboard.datastore.{DatastoreProperties, DatastoreProperty}
 import shapeless.labelled._
 import shapeless.{:+:, ::, CNil, Coproduct, HList, HNil, Inl, Inr, LabelledGeneric, Lazy, Witness}
-import com.google.cloud.datastore.{Entity, FullEntity, Key, DateTime => GDateTime}
-import com.meetup.cupboard.datastore.DatastoreProperties
 
 object DatastoreFormats extends DatastoreProperties {
 
   /// The following section uses the Shapeless library to allow us to work with case classes in a generic way.
   /// You may need to refer to the Shapeless documentation to get a good sense of what this is doing.
-
-  trait DatastoreFormat[A] {
-    def fromEntity(e: FullEntity[_]): Xor[Throwable, A]
-
-    def buildEntity(a: A, e: Entity.Builder): Entity.Builder
-  }
 
   implicit object hNilFormat extends DatastoreFormat[HNil] {
     def fromEntity(j: FullEntity[_]) = Xor.Right(HNil)
@@ -128,4 +121,3 @@ object DatastoreFormats extends DatastoreProperties {
     }
   }
 }
-
