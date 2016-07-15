@@ -8,8 +8,14 @@ import com.google.cloud.datastore.FullEntity
 import com.meetup.cupboard.models.PlanStatus.PlanStatus
 import spray.json.{JsNumber, JsString, JsValue, JsonFormat}
 
+import com.meetup.cupboard.datastore.DatastoreProperties._
 package object models {
   case class Simple(s: String)
+
+  case class Simple2(s: String)
+
+  object Simple2 extends Persistable[Simple2]
+
   case class Foo(s: String, i: Int, b: Boolean)
   case class Bar(i: Int, f: Foo)
   case class Qux[T](i: Int)
