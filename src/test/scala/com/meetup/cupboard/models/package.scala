@@ -8,17 +8,41 @@ import com.google.cloud.datastore.FullEntity
 import com.meetup.cupboard.models.PlanStatus.PlanStatus
 import spray.json.{JsNumber, JsString, JsValue, JsonFormat}
 
+import com.meetup.cupboard.datastore.DatastoreProperties._
+
 package object models {
+  case class User(memberId: Int, username: String, createdAt: java.time.Instant)
+  object User extends Persistable[User]
+
   case class Simple(s: String)
+  object Simple extends Persistable[User]
+
   case class Foo(s: String, i: Int, b: Boolean)
+  object Foo extends Persistable[Foo]
+
   case class Bar(i: Int, f: Foo)
+  object Bar extends Persistable[Bar]
+
   case class Qux[T](i: Int)
+  // object Qux extends Persistable[Qux[T]]
+
   case class Phantom[T, U](i: Int)
+  //object Phantom extends Persistable[Phantom]
+
   case class Many(seq: List[Simple])
+  object Many extends Persistable[Many]
+
   case class BigDecimalTest(bd: BigDecimal)
+  object BigDecimalTest extends Persistable[BigDecimalTest]
+
   case class SeqStringTest(foo: Seq[String])
+  object SeqStringTest extends Persistable[SeqStringTest]
+
   case class SeqIntTest(foo: Seq[Int])
+  object SeqIntTest extends Persistable[SeqIntTest]
+
   case class ZonedDateTimeTest(d: ZonedDateTime)
+  object ZonedDateTimeTest extends Persistable[ZonedDateTimeTest]
 
   case class Subscription(
     startDate: Option[ZonedDateTime],
@@ -30,13 +54,14 @@ package object models {
     notes: String,
     flag: Int
   )
-
-  case class TrialPeriod(p: Period)
-
-  object Subscription {
+  object Subscription extends Persistable[Subscription] {
     val empty = Subscription(None, None, None, None, None, SubscriptionStatus.New, "", 0)
     //val empty = Subscription(None, None, None, None, None, "", 0)
   }
+
+  case class TrialPeriod(p: Period)
+  object TrialPeriod extends Persistable[TrialPeriod]
+
   /* MeetupStatus.OrgSub */
   sealed abstract class SubscriptionStatus(val id: Int)
 
@@ -46,7 +71,7 @@ package object models {
     status: PlanStatus)
 
   case class Entitlements(maxGroups: Option[Long], maxUsers: Option[Int])
-
+  object Entitlements extends Persistable[Entitlements]
   //case object BasicEntitlement extends Entitlements(Some(3), Some(50))
   //case object UnlimitedEntitlement extends Entitlements(Some(3), None)
   //case object ChapterizerUnlimitedEntitlement extends Entitlements(None, None)

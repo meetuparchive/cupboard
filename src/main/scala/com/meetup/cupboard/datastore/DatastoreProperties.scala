@@ -7,6 +7,7 @@ import cats.data.Xor
 import com.google.cloud.datastore.{DateTime => GDateTime, _}
 import scala.collection.JavaConversions._
 import com.meetup.cupboard._
+import java.time.{Period, ZonedDateTime}
 
 object DatastoreProperties extends DatastoreProperties
 /**
