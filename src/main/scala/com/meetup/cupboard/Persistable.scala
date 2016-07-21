@@ -4,6 +4,9 @@ import com.meetup.cupboard.datastore.DatastoreProperty
 import scala.language.postfixOps
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
+import com.meetup.cupboard.datastore.DatastoreProperties._
+import com.meetup.cupboard.datastore.DatastoreProperty
+import com.meetup.cupboard.DatastoreFormat
 
 /**
  * Persistable captures information about and conversion instances for each field in a case class for persistance.
