@@ -89,6 +89,9 @@ object Persistable {
     val typ: Type = weakTypeOf[T]
     val typeName = typ.toString
 
+    //TODO: refactor this code into a "macro bundle" so we can have macro helper functions
+    //      so the following code is not replicated in both macros, or (alternately)
+    //      move to a @Persistable annotation macro.
     // get the fields from the case class, in order
     val fields: List[Symbol] = typ.decls.collectFirst {
       case m: MethodSymbol if m.isPrimaryConstructor => m
