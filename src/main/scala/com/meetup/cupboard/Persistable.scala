@@ -104,24 +104,16 @@ object Persistable {
       val decoded = name.decodedName.toString
       val returnType: Type = typ.decl(name).typeSignature
 
-      // I'm defining a Property instance here to capture the implicit DatastoreProperty
-      // we need, and so that (at a later point) we can let the user manually add their
-      // own custom property.
-      val property =
-        q"""
-            (new  _root_.com.meetup.cupboard.Property[$returnType, $typ]($decoded) {
-                def getPropertyValueFromClass(c: $typ): $returnType = c.$name
-            })"""
-
       val buildEntity =
         q"""
-           val property = $property
+           val property = $companion.properties.$name
            val propertyConverter = property.getPropertyConverter
            val value: $returnType = property.getPropertyValueFromClass(c)
            propertyConverter.setEntityProperty(value, property.name, entity)
           """
+
       val fromEntity = q"""
-        $property.getPropertyConverter.getValueFromEntity($decoded, entity) match {
+        $companion.properties.$name.getPropertyConverter.getValueFromEntity($decoded, entity) match {
           case _root_.cats.data.Xor.Right(v) => v
           case _root_.cats.data.Xor.Left(e) => throw new Exception(e)
         }
