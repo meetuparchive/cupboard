@@ -15,7 +15,7 @@ package object models {
   object User extends Persistable[User]
 
   case class Simple(s: String)
-  object Simple extends Persistable[User]
+  object Simple extends Persistable[Simple]
 
   case class Foo(s: String, i: Int, b: Boolean)
   object Foo extends Persistable[Foo]

@@ -80,8 +80,8 @@ class MacroDatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
 
     it("should support classes w/ sequences of a case class as a property") {
       withDatastore() { ds =>
-        //        val many = Many(List(Simple("hello"), Simple("world"), Simple("foo")))
-        //        testSaveAndLoad(ds, many)
+        val many = Many(List(Simple("hello"), Simple("world"), Simple("foo")))
+        testSaveAndLoad(ds, many)
 
         val seqString = SeqStringTest(Seq("hi", "world", "foo"))
         testSaveAndLoad(ds, seqString)
