@@ -9,7 +9,7 @@ import com.meetup.cupboard.datastore.DatastoreProperty
 import com.meetup.cupboard.DatastoreFormat
 
 /**
- * Persistable captures information about and conversion instances for each field in a case class for persistance.
+ * Persistable captures information about and conversion instances for each field in a case class for persistence.
  *
  * Each field of a case class will have a Property instance which includes its field name and a typeclass instance
  * for conversion.
