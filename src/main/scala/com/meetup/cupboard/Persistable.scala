@@ -55,9 +55,6 @@ object Persistable {
       case m: MethodSymbol if m.isPrimaryConstructor => m
     }.get.paramLists.head
 
-    // get the companion class for this case class, which we need for the constructor
-    val companion = typ.typeSymbol.companion
-
     // create code to instantiate Property instances
     // and also create properties named the same as the case class
     val (properties, defProperties) = fields.map { field ⇒
