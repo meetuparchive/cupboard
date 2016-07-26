@@ -40,11 +40,14 @@ import com.meetup.cupboard.DatastoreFormat
  * @tparam T (or parent class) to be persisted
  */
 trait Persistable[T] {
-  def properties: Properties[T] = macro Persistable.materializePropertiesImpl[T]
-  implicit def datastoreFormat: DatastoreFormat[T] = macro Persistable.materializeDatastoreFormatImpl[T]
+  val properties: Properties[T]
+  implicit def datastoreFormat[T]: DatastoreFormat[T] = macro Persistable.materializeDatastoreFormatImpl[T]
 }
 
 object Persistable {
+  def createProperties[T]: Properties[T] = macro Persistable.materializePropertiesImpl[T]
+  implicit def datastoreFormat[T]: DatastoreFormat[T] = macro Persistable.materializeDatastoreFormatImpl[T]
+
   def materializePropertiesImpl[T: c.WeakTypeTag](c: Context): c.Expr[Properties[T]] = {
     import c.universe._
     val typ: Type = weakTypeOf[T]

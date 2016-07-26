@@ -12,6 +12,7 @@ import shapeless.Typeable
 import scala.reflect.ClassTag
 
 import com.meetup.cupboard.datastore.DatastoreProperties._
+import scala.language.reflectiveCalls
 
 class MacroDatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
   describe("Macro-based DatastoreFormats") {

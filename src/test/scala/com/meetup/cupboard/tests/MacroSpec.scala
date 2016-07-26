@@ -10,6 +10,7 @@ import java.time.Instant
 
 import com.google.cloud.datastore.DateTime
 import com.meetup.cupboard.datastore.DatastoreProperty
+import scala.language.reflectiveCalls
 
 class MacroSpec extends FlatSpec with Matchers {
   "Persistable trait" should "extract class field info & conversion instances" in {
