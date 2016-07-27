@@ -1,11 +1,15 @@
 package com.meetup.cupboard
 
+import com.google.cloud.datastore.StructuredQuery
+import com.google.cloud.datastore.StructuredQuery.PropertyFilter
 import com.meetup.cupboard.datastore.DatastoreProperty
+
 import scala.language.postfixOps
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox.Context
 import com.meetup.cupboard.datastore.DatastoreProperties._
-import com.meetup.cupboard.datastore.DatastoreProperty
+import com.meetup.cupboard.datastore.{DatastoreProperty, FilterProperty}
+import com.google.cloud.datastore.StructuredQuery.PropertyFilter
 
 /**
  * Persistable is a trait that allows a case class to be persisted by Cupboard.
@@ -76,6 +80,7 @@ object Persistable {
       val decoded = name.decodedName.toString
       val returnType: Type = typ.decl(name).typeSignature
 
+      c.info(c.enclosingPosition, "type is: " + returnType.toString(), force = true)
       val property =
         q"""
             (new  _root_.com.meetup.cupboard.Property[$returnType, $typ]($decoded) {
@@ -153,6 +158,10 @@ object Persistable {
 }
 
 abstract class Property[PropertyValue, C](val name: String)(implicit propertyConverter: DatastoreProperty[PropertyValue, _]) {
+  def eq(p: PropertyValue)(implicit filterProperty: FilterProperty[PropertyValue, _]): Filter = Filter(
+    filterProperty.getPropertyFilterEq(p, name)
+  )
+
   def getPropertyConverter() = propertyConverter
   def getPropertyValueFromClass(c: C): PropertyValue
 }
