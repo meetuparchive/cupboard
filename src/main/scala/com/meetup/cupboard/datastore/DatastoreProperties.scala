@@ -5,10 +5,11 @@ import java.time.{Instant, Period, ZoneOffset, ZonedDateTime}
 
 import cats.data.Xor
 import com.google.cloud.datastore.{DateTime => GDateTime, _}
-import com.meetup.cupboard.DatastoreFormats.DatastoreFormat
-import com.meetup.cupboard.Result
 import scala.collection.JavaConversions._
+import com.meetup.cupboard._
+import java.time.{Period, ZonedDateTime}
 
+object DatastoreProperties extends DatastoreProperties
 /**
  *   DatastoreProperties define how to translate individual values from the case class type to the datastore type.
  *
@@ -101,12 +102,6 @@ trait DatastoreProperties extends LowPriorityProperties {
 }
 
 trait LowPriorityProperties {
-
-  trait DatastoreProperty[V, D] {
-    def getValueFromEntity(fieldName: String, e: FullEntity[_]): Xor[Throwable, V]
-
-    def setEntityProperty(v: V, fieldName: String, e: Entity.Builder): Entity.Builder
-  }
 
   implicit object StringDatastoreProperty extends DatastoreProperty[String, String] {
     def getValueFromEntity(name: String, e: FullEntity[_]) = {

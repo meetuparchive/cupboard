@@ -1,25 +1,17 @@
 package com.meetup.cupboard
 
 import java.io.File
-import com.meetup.cupboard.JsonFormats._
-import spray.json._
+import com.meetup.cupboard.models._
+import com.meetup.cupboard.datastore.DatastoreProperties._
 
 import org.scalatest.{FunSpec, Matchers}
+import com.meetup.cupboard.models.User
 
 class JarCupboardComponentTest extends FunSpec with Matchers {
-  import com.meetup.cupboard.models.Foo
 
   describe("jar-cupboard-test") {
-    it("should work as dependency") {
-      // serialize
-      val foo1 = Foo("foo", 1)
-      val fooJson = foo1.toJson
-      println(fooJson)
-      fooJson shouldBe """{"i":1,"s":"foo"}""".parseJson
-
-      // deserialize
-      val foo1restored = fooJson.convertTo[Foo]
-      foo1restored shouldBe foo1
+    it("macro should work as dependency") {
+        assert(User.properties.username.name == "username")
     }
   }
 }

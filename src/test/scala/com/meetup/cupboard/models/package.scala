@@ -5,21 +5,63 @@ import java.time.{Period, ZonedDateTime}
 import cats.data.Xor
 import com.google.cloud.datastore.Entity.Builder
 import com.google.cloud.datastore.FullEntity
-import com.meetup.cupboard.DatastoreFormats.DatastoreFormat
 import com.meetup.cupboard.models.PlanStatus.PlanStatus
 import spray.json.{JsNumber, JsString, JsValue, JsonFormat}
+import scala.reflect.runtime.universe.WeakTypeTag
+
+import com.meetup.cupboard.datastore.DatastoreProperties._
 
 package object models {
+  case class User(memberId: Int, username: String, createdAt: java.time.Instant)
+  object User extends Persistable[User] {
+    val properties = Persistable.createProperties[User]
+  }
+
   case class Simple(s: String)
+  object Simple extends Persistable[Simple] {
+    val properties = Persistable.createProperties[Simple]
+  }
+
   case class Foo(s: String, i: Int, b: Boolean)
+  object Foo extends Persistable[Foo] {
+    val properties = Persistable.createProperties[Foo]
+  }
+
   case class Bar(i: Int, f: Foo)
+  object Bar extends Persistable[Bar] {
+    val properties = Persistable.createProperties[Bar]
+  }
+
   case class Qux[T](i: Int)
+  // object Qux extends Persistable[Qux[T]]
+
   case class Phantom[T, U](i: Int)
+  //object Phantom extends Persistable[Phantom]
+
   case class Many(seq: List[Simple])
+  object Many extends Persistable[Many] {
+    val properties = Persistable.createProperties[Many]
+  }
+
   case class BigDecimalTest(bd: BigDecimal)
+  object BigDecimalTest extends Persistable[BigDecimalTest] {
+    val properties = Persistable.createProperties[BigDecimalTest]
+  }
+
   case class SeqStringTest(foo: Seq[String])
+  object SeqStringTest extends Persistable[SeqStringTest] {
+    val properties = Persistable.createProperties[SeqStringTest]
+  }
+
   case class SeqIntTest(foo: Seq[Int])
+  object SeqIntTest extends Persistable[SeqIntTest] {
+    val properties = Persistable.createProperties[SeqIntTest]
+  }
+
   case class ZonedDateTimeTest(d: ZonedDateTime)
+  object ZonedDateTimeTest extends Persistable[ZonedDateTimeTest] {
+    val properties = Persistable.createProperties[ZonedDateTimeTest]
+  }
 
   case class Subscription(
     startDate: Option[ZonedDateTime],
@@ -31,13 +73,17 @@ package object models {
     notes: String,
     flag: Int
   )
-
-  case class TrialPeriod(p: Period)
-
   object Subscription {
+    //val properties = Persistable.createProperties[Subscription]
     val empty = Subscription(None, None, None, None, None, SubscriptionStatus.New, "", 0)
     //val empty = Subscription(None, None, None, None, None, "", 0)
   }
+
+  case class TrialPeriod(p: Period)
+  object TrialPeriod extends Persistable[TrialPeriod] {
+    val properties = Persistable.createProperties[TrialPeriod]
+  }
+
   /* MeetupStatus.OrgSub */
   sealed abstract class SubscriptionStatus(val id: Int)
 
@@ -47,7 +93,9 @@ package object models {
     status: PlanStatus)
 
   case class Entitlements(maxGroups: Option[Long], maxUsers: Option[Int])
-
+  object Entitlements extends Persistable[Entitlements] {
+    val properties = Persistable.createProperties[Entitlements]
+  }
   //case object BasicEntitlement extends Entitlements(Some(3), Some(50))
   //case object UnlimitedEntitlement extends Entitlements(Some(3), None)
   //case object ChapterizerUnlimitedEntitlement extends Entitlements(None, None)

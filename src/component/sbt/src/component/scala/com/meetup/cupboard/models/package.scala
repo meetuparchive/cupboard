@@ -1,10 +1,12 @@
 package com.meetup.cupboard
 
 import java.time.ZonedDateTime
-
-import spray.json.{ JsNumber, JsString, JsValue, JsonFormat }
+import com.meetup.cupboard.datastore.DatastoreProperties._
 
 package object models {
-  case class Foo(s: String, i: Int)
+  case class User(username: String, id: Int)
+  object User extends Persistable[User] {
+    val properties = Persistable.createProperties[User]
+  }
 }
 
