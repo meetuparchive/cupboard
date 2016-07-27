@@ -11,3 +11,4 @@ libraryDependencies ++= Seq(
   "com.meetup" %% "cupboard" % projectVersion
 )
 
+scalacOptions += "-language:reflectiveCalls"
