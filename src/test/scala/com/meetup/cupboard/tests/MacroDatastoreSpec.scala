@@ -7,12 +7,11 @@ import com.google.cloud.datastore.Datastore
 import com.meetup.cupboard.{AdHocDatastore, Cupboard, DatastoreFormat}
 import com.meetup.cupboard.models.{Bar, Subscription, _}
 import org.scalatest._
-import shapeless.Typeable
+import scala.reflect.runtime.universe.WeakTypeTag
 
 import scala.reflect.ClassTag
 
 import com.meetup.cupboard.datastore.DatastoreProperties._
-import scala.language.reflectiveCalls
 
 class MacroDatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
   describe("Macro-based DatastoreFormats") {
@@ -159,7 +158,7 @@ class MacroDatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
    * @param cf implicit DatastoreFormat
    * @tparam C type of case class
    */
-  def testSaveAndLoad[C](ds: Datastore, c: C)(implicit cf: DatastoreFormat[C], tag: ClassTag[C], typeable: Typeable[C]) = {
+  def testSaveAndLoad[C](ds: Datastore, c: C)(implicit cf: DatastoreFormat[C], tag: ClassTag[C], typeTag: WeakTypeTag[C]) = {
     val cResult = Cupboard.save[C](ds, c)
     val cPersisted = cResult.getOrElse(fail())
     val cRestored = Cupboard.load[C](ds, cPersisted.id)

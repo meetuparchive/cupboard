@@ -5,7 +5,7 @@ import java.time.Instant
 import cats.data.Xor
 import com.google.cloud.datastore.Entity.Builder
 import com.google.cloud.datastore.{Datastore, Entity, Key, ReadOption}
-import shapeless.Typeable
+import scala.reflect.runtime.universe.WeakTypeTag
 
 import com.meetup.cupboard.datastore.DatastoreProperties.InstantDatastoreProperty
 import scala.reflect.ClassTag
@@ -15,12 +15,14 @@ object Cupboard {
   /**
    * Save an entity to Datastore using the default kind.
    *
-   * @param ds A datastore instance
+   * The default kind is based on the name of the case class type, as determined by compile time reflection.
+   *
+   * @param ds        A datastore instance
    * @param caseClass The entity to store
    * @tparam C The type of your case class
    */
-  def save[C](ds: Datastore, caseClass: C)(implicit cf: DatastoreFormat[C], typeable: Typeable[C]): Result[C] = {
-    save(ds, caseClass, typeable.describe)
+  def save[C](ds: Datastore, caseClass: C)(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C]): Result[C] = {
+    save(ds, caseClass, getName(typeTag))
   }
 
   /**
@@ -55,8 +57,8 @@ object Cupboard {
   /**
    * Update an entity with a new value.
    */
-  def update[C](ds: Datastore, caseClass: C, id: Long)(implicit cf: DatastoreFormat[C], typeable: Typeable[C], classtag: ClassTag[C]): Result[C] = {
-    update(ds, caseClass, id, typeable.describe)
+  def update[C](ds: Datastore, caseClass: C, id: Long)(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C], classtag: ClassTag[C]): Result[C] = {
+    update(ds, caseClass, id, getName(typeTag))
   }
 
   def getKey(ds: Datastore, kind: String): Key = {
@@ -69,8 +71,8 @@ object Cupboard {
     keyFactory.newKey(id)
   }
 
-  def load[C](ds: Datastore, id: Long)(implicit cf: DatastoreFormat[C], typeable: Typeable[C]) = {
-    loadKind(ds, id, typeable.describe)
+  def load[C](ds: Datastore, id: Long)(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C]) = {
+    loadKind(ds, id, getName(typeTag))
   }
 
   def loadKind[C](ds: Datastore, id: Long, kind: String)(implicit cf: DatastoreFormat[C]): Result[C] = {
@@ -121,6 +123,16 @@ object Cupboard {
 
       Persisted(Long.unbox(key.id()), caseClass, now, persisted.created)
     }
+  }
+
+  /**
+   * Use compile-time reflection to get the name of a type as a string.
+   *
+   * @param typeTag WeakTypeTag (allows components with generic or abstract types)
+   * @return name of type as a string
+   */
+  private def getName(typeTag: WeakTypeTag[_]): String = {
+    typeTag.tpe.typeSymbol.name.toString
   }
 
 }

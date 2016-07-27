@@ -7,7 +7,7 @@ import com.google.cloud.datastore.Entity.Builder
 import com.google.cloud.datastore.FullEntity
 import com.meetup.cupboard.models.PlanStatus.PlanStatus
 import spray.json.{JsNumber, JsString, JsValue, JsonFormat}
-import scala.language.reflectiveCalls
+import scala.reflect.runtime.universe.WeakTypeTag
 
 import com.meetup.cupboard.datastore.DatastoreProperties._
 
