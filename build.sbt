@@ -9,6 +9,10 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "macro-compat" % "1.1.1"
 )
 
+scalacOptions ++= Seq(
+  "-language:reflectiveCalls"   // necessary until we implement "vampire methods" to eliminate this warning
+)
+
 enablePlugins(CommonSettingsPlugin)
 enablePlugins(NexusPlugin)
 enablePlugins(CoverallsWrapper)
