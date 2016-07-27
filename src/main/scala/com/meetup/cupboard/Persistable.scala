@@ -8,36 +8,48 @@ import com.meetup.cupboard.datastore.DatastoreProperties._
 import com.meetup.cupboard.datastore.DatastoreProperty
 
 /**
- * Persistable captures information about and conversion instances for each field in a case class for persistence.
- *
- * Each field of a case class will have a Property instance which includes its field name and a typeclass instance
- * for conversion.
- *
- * This uses a macro behind the scenes to pull the name of each field to runtime (without reflection) and to create
- * fields on the Properties object that matches
- *
- * For example, given:
- *
- * ```
- * case class User(memberId: Int, username: String, createdAt: java.time.Instant)
- * object User extends Persistable[User]
- * ```
- *
- * Persistable provides the following:
- *
- * ```
- * scala> User.properties.all
- * res0: List[com.meetup.cupboard.Property[_]] = List(Property(memberId), Property(username), Property(createdAt))
- *
- * scala> User.properties.createdAt
- * res1: com.meetup.cupboard.Property[java.time.Instant] = Property(createdAt)
- *
- * scala> User.properties.createdAt.name
- * res2: String = createdAt
- * ```
- *
- * @tparam T (or parent class) to be persisted
- */
+  * Persistable is a trait that allows a case class to be persisted by Cupboard.
+  *
+  * To use Persistable, extend the companion class of the case class with Persistable[T]
+  * (where [T] is the type of your case class) and define a properties method as follows:
+  *
+  * ```
+  * case class User(memberId: Int, username: String, createdAt: java.time.Instant)
+  * object User extends Persistable[User] {
+  *   val properties = Persistable.createProperties[User]
+  * }
+  * ```
+  *
+  * There are two 'def macros' that are included in this PR.
+  *
+  * One is an implicit def which provides the implicit DatastoreFormat[T] which knows how to transform the case class
+  * into the Entity objects we store and receive from Datastore.
+  *
+  * The second method macro implements Persistable.createProperties creates a Properties[T] object available at
+  * properties which provides access to Property objects which contain the name of the property, its type, and the
+  * DatastoreProperty object that knows how to do the transformations between the type and the appropriate Datastore
+  * type.
+  *
+  * For example, given the definition of User above, User.properties includes:
+  * ```
+  * scala> User.properties.all
+  * res0: List[com.meetup.cupboard.Property[_]] = List(Property(memberId), Property(username), Property(createdAt))
+  *
+  * scala> User.properties.createdAt
+  * res1: com.meetup.cupboard.Property[java.time.Instant] = Property(createdAt)
+  *
+  * scala> User.properties.createdAt.name
+  * res2: String = createdAt
+  * ```
+  *
+  * This PR does not include the ability to persist one of a case class family (e.g. enum/AST style case classes that
+  * extend a common sealed trait).
+  *
+  * In the future, a @Persistable annotation may be added to implement the boilerplate above, and a change to the
+  * implementation ("vampire methods") will remove the "reflective calls" warning.
+  *
+  * @tparam T case class to be persisted
+  */
 trait Persistable[T] {
   val properties: Properties[T]
   implicit def datastoreFormat[T]: DatastoreFormat[T] = macro Persistable.materializeDatastoreFormatImpl[T]
@@ -88,9 +100,6 @@ object Persistable {
     val typ: Type = weakTypeOf[T]
     val typeName = typ.toString
 
-    //TODO: refactor this code into a "macro bundle" so we can have macro helper functions
-    //      so the following code is not replicated in both macros, or (alternately)
-    //      move to a @Persistable annotation macro.
     // get the fields from the case class, in order
     val fields: List[Symbol] = typ.decls.collectFirst {
       case m: MethodSymbol if m.isPrimaryConstructor => m
