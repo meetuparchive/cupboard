@@ -36,7 +36,9 @@ class QuerySpec extends FunSpec with Matchers with AdHocDatastore {
           Cupboard.save(ds, z3)
         }
 
+        // "i eq 3" is scala infix notation for "i.eq(3)"
         val filter = Foo.properties.i eq 3
+
 
         val resultXor = EntityQuery[Foo]()
           .filter(filter)

@@ -93,7 +93,7 @@ object Cupboard {
   def load[C](ds: Datastore, id: Long)(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C]) = {
     loadKind(ds, id, getName(typeTag))
   }
-  
+
   def loadKind[C](ds: Datastore, id: Long, kind: String)(implicit cf: DatastoreFormat[C]): Result[C] = {
     val key = ds.newKeyFactory()
       .kind(kind)
