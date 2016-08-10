@@ -26,7 +26,7 @@ class QuerySpec extends FunSpec with Matchers with AdHocDatastore {
         val ancestorKey = Cupboard.getKeyWithId(ds, "Foo", persistedParent.id)
 
         // save 10 instances of Foo
-        for (i <- 1 until 10) {
+        for (i <- 1 to 10) {
           val z1 = Foo(s"test${i}_1", i, i % 2 == 0)
           val z2 = Foo(s"test${i}_2", i, i % 2 == 0)
           val z3 = Foo(s"test${i}_3", i, i % 2 == 0)
