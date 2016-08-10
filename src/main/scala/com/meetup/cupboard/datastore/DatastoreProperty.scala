@@ -13,5 +13,9 @@ trait DatastoreProperty[V, D] {
 
 @annotation.implicitNotFound(msg = "Properties of type ${V} can't be used to filter (or you haven't imported com.meetup.cupboard.datastore.DatastoreProperties._)")
 trait FilterProperty[V, D] extends DatastoreProperty[V, D] {
-  def getPropertyFilterEq(v: V, fieldName: String): PropertyFilter
+  def getFilterEq(v: V, fieldName: String): PropertyFilter
+  def getFilterLt(v: V, fieldName: String): PropertyFilter
+  def getFilterGt(v: V, fieldName: String): PropertyFilter
+  def getFilterLe(v: V, fieldName: String): PropertyFilter
+  def getFilterGe(v: V, fieldName: String): PropertyFilter
 }

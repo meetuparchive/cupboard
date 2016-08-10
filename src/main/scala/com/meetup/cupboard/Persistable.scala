@@ -157,9 +157,20 @@ object Persistable {
 }
 
 abstract class Property[PropertyValue, C](val name: String)(implicit propertyConverter: DatastoreProperty[PropertyValue, _]) {
-  def eq(p: PropertyValue)(implicit filterProperty: FilterProperty[PropertyValue, _]): Filter = Filter(
-    filterProperty.getPropertyFilterEq(p, name)
-  )
+  def eq(p: PropertyValue)(implicit filterProperty: FilterProperty[PropertyValue, _]): Filter =
+    Filter(filterProperty.getFilterEq(p, name))
+
+  def lt(p: PropertyValue)(implicit filterProperty: FilterProperty[PropertyValue, _]): Filter =
+    Filter(filterProperty.getFilterLt(p, name))
+
+  def gt(p: PropertyValue)(implicit filterProperty: FilterProperty[PropertyValue, _]): Filter =
+    Filter(filterProperty.getFilterGt(p, name))
+
+  def le(p: PropertyValue)(implicit filterProperty: FilterProperty[PropertyValue, _]): Filter =
+    Filter(filterProperty.getFilterLe(p, name))
+
+  def ge(p: PropertyValue)(implicit filterProperty: FilterProperty[PropertyValue, _]): Filter =
+    Filter(filterProperty.getFilterGe(p, name))
 
   def getPropertyConverter() = propertyConverter
   def getPropertyValueFromClass(c: C): PropertyValue
