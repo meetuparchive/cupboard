@@ -5,11 +5,26 @@ import java.time.{Instant, Period, ZoneOffset, ZonedDateTime}
 
 import cats.data.Xor
 import com.google.cloud.datastore.{DateTime => GDateTime, _}
+
 import scala.collection.JavaConversions._
 import com.meetup.cupboard._
 import java.time.{Period, ZonedDateTime}
 
-object DatastoreProperties extends DatastoreProperties
+import com.google.cloud.datastore.StructuredQuery.PropertyFilter
+
+object DatastoreProperties extends DatastoreProperties {
+  // turn a list of Xors into an Xor of a list
+  def sequence[E](input: List[Xor[Throwable, E]]): Xor[Throwable, List[E]] = {
+    input.foldRight[Xor[Throwable, List[E]]](Xor.Right(Nil)) { (o, ol) =>
+      (o, ol) match {
+        case (Xor.Right(x), Xor.Right(xs)) => Xor.Right(x :: xs)
+        case (Xor.Left(y), _) => Xor.Left(y)
+        case (_, Xor.Left(z)) => Xor.Left(z)
+      }
+    }
+  }
+}
+
 /**
  *   DatastoreProperties define how to translate individual values from the case class type to the datastore type.
  *
@@ -44,6 +59,7 @@ trait DatastoreProperties extends LowPriorityProperties {
         }
         e.set(name, emptyEntity.build())
       }
+
     }
 
   implicit def SeqEntityProperty[E](implicit entityDatastoreFormat: DatastoreFormat[E]): DatastoreProperty[List[E], java.util.List[FullEntity[_]]] = {
@@ -51,7 +67,7 @@ trait DatastoreProperties extends LowPriorityProperties {
       def getValueFromEntity(name: String, e: FullEntity[_]) = {
         val internalEntities: java.util.List[EntityValue] = e.getList[EntityValue](name)
         val entities = internalEntities.map(e => entityDatastoreFormat.fromEntity(e.get())).toList
-        sequence(entities)
+        DatastoreProperties.sequence(entities)
       }
 
       def setEntityProperty(v: List[E], name: String, e: Entity.Builder): Entity.Builder = {
@@ -65,17 +81,6 @@ trait DatastoreProperties extends LowPriorityProperties {
 
         val entities2 = entities.toBuffer
         e.set(name, entities2)
-      }
-
-      // turn a list of Xors into an Xor of a list
-      def sequence(input: List[Xor[Throwable, E]]): Xor[Throwable, List[E]] = {
-        input.foldRight[Xor[Throwable, List[E]]](Xor.Right(Nil)) { (o, ol) =>
-          (o, ol) match {
-            case (Xor.Right(x), Xor.Right(xs)) => Xor.Right(x :: xs)
-            case (Xor.Left(y), _) => Xor.Left(y)
-            case (_, Xor.Left(z)) => Xor.Left(z)
-          }
-        }
       }
     }
   }
@@ -103,7 +108,7 @@ trait DatastoreProperties extends LowPriorityProperties {
 
 trait LowPriorityProperties {
 
-  implicit object StringDatastoreProperty extends DatastoreProperty[String, String] {
+  implicit object StringDatastoreProperty extends FilterProperty[String, String] {
     def getValueFromEntity(name: String, e: FullEntity[_]) = {
       Xor.catchNonFatal(e.getString(name))
     }
@@ -111,9 +116,14 @@ trait LowPriorityProperties {
     def setEntityProperty(v: String, name: String, e: Entity.Builder): Entity.Builder = {
       e.set(name, v)
     }
+
+    def getPropertyFilterEq(v: String, fieldName: String): PropertyFilter = {
+      PropertyFilter.eq(fieldName, v)
+    }
+
   }
 
-  implicit object IntDatastoreProperty extends DatastoreProperty[Int, Int] {
+  implicit object IntDatastoreProperty extends FilterProperty[Int, Int] {
     def getValueFromEntity(name: String, e: FullEntity[_]) = {
       Xor.catchNonFatal(e.getLong(name).toInt)
     }
@@ -121,15 +131,23 @@ trait LowPriorityProperties {
     def setEntityProperty(v: Int, name: String, e: Entity.Builder) = {
       e.set(name, v)
     }
+
+    def getPropertyFilterEq(v: Int, fieldName: String): PropertyFilter = {
+      PropertyFilter.eq(fieldName, v)
+    }
   }
 
-  implicit object LongDatastoreProperty extends DatastoreProperty[Long, Long] {
+  implicit object LongDatastoreProperty extends FilterProperty[Long, Long] {
     def getValueFromEntity(name: String, e: FullEntity[_]) = {
       Xor.catchNonFatal(e.getLong(name))
     }
 
     def setEntityProperty(v: Long, name: String, e: Entity.Builder) = {
       e.set(name, v)
+    }
+
+    def getPropertyFilterEq(v: Long, fieldName: String): PropertyFilter = {
+      PropertyFilter.eq(fieldName, v)
     }
   }
 
