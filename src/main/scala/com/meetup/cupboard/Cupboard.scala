@@ -4,10 +4,11 @@ import java.time.Instant
 
 import cats.data.Xor
 import com.google.cloud.datastore.Entity.Builder
-import com.google.cloud.datastore.{Datastore, Entity, Key, ReadOption}
-import scala.reflect.runtime.universe.WeakTypeTag
+import com.google.cloud.datastore._
 
+import scala.reflect.runtime.universe.WeakTypeTag
 import com.meetup.cupboard.datastore.DatastoreProperties.InstantDatastoreProperty
+
 import scala.reflect.ClassTag
 
 object Cupboard {
@@ -45,6 +46,16 @@ object Cupboard {
   }
 
   /**
+   * Save with a specified ancestor
+   */
+  def saveWithAncestor[C](ds: Datastore, caseClass: C, kind: String, ancestorKind: String, ancestorId: Long)(implicit cf: DatastoreFormat[C]): Result[C] = {
+    Xor.catchNonFatal {
+      val key = getKeyWithAncestor(ds, kind, ancestorKind, ancestorId)
+      createEntity(ds, caseClass, key, cf)
+    }
+  }
+
+  /**
    * Update an entity with a new value, using a custom kind.
    *
    * This will replace the old entity with what you're providing.
@@ -62,7 +73,15 @@ object Cupboard {
   }
 
   def getKey(ds: Datastore, kind: String): Key = {
-    val keyFactory = ds.newKeyFactory().kind(kind)
+    val keyFactory = ds.newKeyFactory()
+      .kind(kind)
+    ds.allocateId(keyFactory.newKey())
+  }
+
+  def getKeyWithAncestor(ds: Datastore, kind: String, ancestorKind: String, ancestorValue: Long): Key = {
+    val keyFactory = ds.newKeyFactory()
+      .kind(kind)
+      .ancestors(PathElement.of(ancestorKind, ancestorValue))
     ds.allocateId(keyFactory.newKey())
   }
 
@@ -75,6 +94,8 @@ object Cupboard {
     loadKind(ds, id, getName(typeTag))
   }
 
+  //def query[C](ds: Datastore): Query[C] = Query[C]
+
   def loadKind[C](ds: Datastore, id: Long, kind: String)(implicit cf: DatastoreFormat[C]): Result[C] = {
     val key = ds.newKeyFactory()
       .kind(kind)
@@ -84,17 +105,20 @@ object Cupboard {
       .map(Xor.Right(_)) // converting option to Xor
       .getOrElse(Xor.Left(new RuntimeException(s"No entity found with id $id")))
 
-    entityXor.flatMap { entity =>
-      cf.fromEntity(entity).flatMap { caseClass =>
-        val modified = InstantDatastoreProperty.getValueFromEntity("modified", entity)
-        val created = InstantDatastoreProperty.getValueFromEntity("created", entity)
-        modified.flatMap { mtime =>
-          created.map(ctime =>
-            Persisted(id, caseClass, mtime, ctime)
-          )
-        }
+    entityXor.flatMap((entity: Entity) => entityToCaseClass[C](id, entity, cf))
+  }
+
+  def entityToCaseClass[C](id: Long, entity: Entity, cf: DatastoreFormat[C]): Xor[Throwable, Persisted[C]] = {
+    val r: Xor[Throwable, Persisted[C]] = cf.fromEntity(entity).flatMap { caseClass =>
+      val modified = InstantDatastoreProperty.getValueFromEntity("modified", entity)
+      val created = InstantDatastoreProperty.getValueFromEntity("created", entity)
+      modified.flatMap { mtime =>
+        created.map(ctime =>
+          Persisted(id, caseClass, mtime, ctime)
+        )
       }
     }
+    r
   }
 
   private def createEntity[C](ds: Datastore, caseClass: C, key: Key, cf: DatastoreFormat[C]): Persisted[C] = {
@@ -131,7 +155,7 @@ object Cupboard {
    * @param typeTag WeakTypeTag (allows components with generic or abstract types)
    * @return name of type as a string
    */
-  private def getName(typeTag: WeakTypeTag[_]): String = {
+  private[cupboard] def getName(typeTag: WeakTypeTag[_]): String = {
     typeTag.tpe.typeSymbol.name.toString
   }
 
