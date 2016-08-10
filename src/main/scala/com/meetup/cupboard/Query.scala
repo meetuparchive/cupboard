@@ -41,9 +41,7 @@ case class EntityQuery[C](
   def resultAsSeq(ds: Datastore): Xor[Throwable, Seq[Persisted[C]]] = {
     val result = runQuery(ds).asScala.map(entity => {
       val key: Long = entity.key().id()
-      val xorResult = Cupboard.entityToCaseClass(key, entity, cf)
-      println(s"xorResult is: $xorResult")
-      xorResult
+      Cupboard.entityToCaseClass(key, entity, cf)
     })
     DatastoreProperties.sequence(result.toList)
   }

@@ -48,6 +48,14 @@ class QuerySpec extends FunSpec with Matchers with AdHocDatastore {
         assert(results.exists(foo => foo.entity.s == "test3_2"))
         assert(!results.exists(foo => foo.entity.s == "test3_3"))
 
+        val noFilterResult = EntityQuery[Foo]()
+          .ancestorKey(ancestorKey)
+          .resultAsSeq(ds)
+          .toOption
+        noFilterResult match {
+          case None => fail()
+          case Some(seq) => assert(seq.length == 21)
+        }
       }
     }
   }

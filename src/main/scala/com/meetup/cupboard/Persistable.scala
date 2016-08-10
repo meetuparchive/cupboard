@@ -80,7 +80,6 @@ object Persistable {
       val decoded = name.decodedName.toString
       val returnType: Type = typ.decl(name).typeSignature
 
-      c.info(c.enclosingPosition, "type is: " + returnType.toString(), force = true)
       val property =
         q"""
             (new  _root_.com.meetup.cupboard.Property[$returnType, $typ]($decoded) {
