@@ -4,7 +4,7 @@ import java.time.{Period, ZoneOffset, ZonedDateTime}
 
 import cats.data.Xor
 import com.google.cloud.datastore.Datastore
-import com.meetup.cupboard._
+import com.meetup.cupboard.{Filter, _}
 import com.meetup.cupboard.models.{Bar, Subscription, _}
 import org.scalatest._
 
@@ -36,7 +36,9 @@ class QuerySpec extends FunSpec with Matchers with AdHocDatastore {
           Cupboard.save(ds, z3)
         }
 
-        val filter = Foo.properties.i.eq(3)
+        // "i eq 3" is scala infix notation for "i.eq(3)"
+        val filter = Foo.properties.i eq 3
+
 
         val resultXor = EntityQuery[Foo]()
           .filter(filter)
@@ -56,7 +58,33 @@ class QuerySpec extends FunSpec with Matchers with AdHocDatastore {
           case None => fail()
           case Some(seq) => assert(seq.length == 21)
         }
+
+        val mkQuery: (Filter) => Option[Seq[Persisted[Foo]]] = {
+          EntityQuery[Foo]()
+            .filter(_)
+            .ancestorKey(ancestorKey)
+            .resultAsSeq(ds)
+            .toOption
+        }
+        val countFilterResults = (foos: Option[Seq[Persisted[Foo]]], n: Int) =>
+          foos match {
+            case Some(seq) => assert(seq.length == n)
+            case None => fail
+          }
+
+        countFilterResults(mkQuery(Foo.properties.i lt 3), 5)
+        countFilterResults(mkQuery(Foo.properties.i le 3), 7)
+        countFilterResults(mkQuery(Foo.properties.i gt 3), 14)
+        countFilterResults(mkQuery(Foo.properties.i ge 3), 16)
+
+        countFilterResults(mkQuery(Foo.properties.s eq "test2_1"), 1)
+        countFilterResults(mkQuery(Foo.properties.s lt "test2_1"), 5)
+        countFilterResults(mkQuery(Foo.properties.s le "test2_1"), 6)
+        countFilterResults(mkQuery(Foo.properties.s gt "test2_1"), 15)
+        countFilterResults(mkQuery(Foo.properties.s ge "test2_1"), 16)
+
       }
     }
   }
 }
+

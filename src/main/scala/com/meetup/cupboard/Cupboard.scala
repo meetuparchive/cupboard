@@ -94,8 +94,6 @@ object Cupboard {
     loadKind(ds, id, getName(typeTag))
   }
 
-  //def query[C](ds: Datastore): Query[C] = Query[C]
-
   def loadKind[C](ds: Datastore, id: Long, kind: String)(implicit cf: DatastoreFormat[C]): Result[C] = {
     val key = ds.newKeyFactory()
       .kind(kind)

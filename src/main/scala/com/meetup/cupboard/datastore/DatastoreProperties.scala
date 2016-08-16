@@ -117,9 +117,11 @@ trait LowPriorityProperties {
       e.set(name, v)
     }
 
-    def getPropertyFilterEq(v: String, fieldName: String): PropertyFilter = {
-      PropertyFilter.eq(fieldName, v)
-    }
+    override def getFilterEq(v: String, fieldName: String): PropertyFilter = PropertyFilter.eq(fieldName, v)
+    override def getFilterLt(v: String, fieldName: String): PropertyFilter = PropertyFilter.lt(fieldName, v)
+    override def getFilterLe(v: String, fieldName: String): PropertyFilter = PropertyFilter.le(fieldName, v)
+    override def getFilterGt(v: String, fieldName: String): PropertyFilter = PropertyFilter.gt(fieldName, v)
+    override def getFilterGe(v: String, fieldName: String): PropertyFilter = PropertyFilter.ge(fieldName, v)
 
   }
 
@@ -132,9 +134,12 @@ trait LowPriorityProperties {
       e.set(name, v)
     }
 
-    def getPropertyFilterEq(v: Int, fieldName: String): PropertyFilter = {
-      PropertyFilter.eq(fieldName, v)
-    }
+    // note that these methods are overloaded by type of v, which is why we can't generalize over them
+    override def getFilterEq(v: Int, fieldName: String): PropertyFilter = PropertyFilter.eq(fieldName, v)
+    override def getFilterLt(v: Int, fieldName: String): PropertyFilter = PropertyFilter.lt(fieldName, v)
+    override def getFilterLe(v: Int, fieldName: String): PropertyFilter = PropertyFilter.le(fieldName, v)
+    override def getFilterGt(v: Int, fieldName: String): PropertyFilter = PropertyFilter.gt(fieldName, v)
+    override def getFilterGe(v: Int, fieldName: String): PropertyFilter = PropertyFilter.ge(fieldName, v)
   }
 
   implicit object LongDatastoreProperty extends FilterProperty[Long, Long] {
@@ -146,9 +151,11 @@ trait LowPriorityProperties {
       e.set(name, v)
     }
 
-    def getPropertyFilterEq(v: Long, fieldName: String): PropertyFilter = {
-      PropertyFilter.eq(fieldName, v)
-    }
+    override def getFilterEq(v: Long, fieldName: String): PropertyFilter = PropertyFilter.eq(fieldName, v)
+    override def getFilterLt(v: Long, fieldName: String): PropertyFilter = PropertyFilter.lt(fieldName, v)
+    override def getFilterLe(v: Long, fieldName: String): PropertyFilter = PropertyFilter.le(fieldName, v)
+    override def getFilterGt(v: Long, fieldName: String): PropertyFilter = PropertyFilter.gt(fieldName, v)
+    override def getFilterGe(v: Long, fieldName: String): PropertyFilter = PropertyFilter.ge(fieldName, v)
   }
 
   implicit object ZonedDateTimeDatastoreProperty extends DatastoreProperty[ZonedDateTime, GDateTime] {
