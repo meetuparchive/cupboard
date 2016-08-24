@@ -4,13 +4,12 @@ import java.time.{Period, ZoneOffset, ZonedDateTime}
 
 import cats.data.Xor
 import com.google.cloud.datastore.Datastore
-import com.meetup.cupboard.{AdHocDatastore, Cupboard, DatastoreFormat}
+import com.meetup.cupboard.{AdHocDatastore, Cupboard, DatastoreFormat, Persisted}
 import com.meetup.cupboard.models.{Bar, Subscription, _}
 import org.scalatest._
+
 import scala.reflect.runtime.universe.WeakTypeTag
-
 import scala.reflect.ClassTag
-
 import com.meetup.cupboard.datastore.DatastoreProperties._
 
 class MacroDatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
@@ -29,6 +28,20 @@ class MacroDatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
 
         testSaveAndLoad(ds, BigDecimalTest(BigDecimal(392.23)))
 
+      }
+    }
+
+    it("should support saving & loading with ancestor keys") {
+      withDatastore() { ds =>
+        val ancestorKey = Cupboard.getKeyWithId(ds, "Parent", 999)
+
+        val f = Foo("test", 3, true)
+
+        val p = Cupboard.saveWithAncestor(ds, f, "Foo", "Parent", 999)
+        val persistedF = p.getOrElse(fail())
+        val id = persistedF.id
+        val result = Cupboard.load[Foo](ds, id, List(("Parent", 999)))
+        result.map(_.entity) shouldBe Xor.Right(f)
       }
     }
 

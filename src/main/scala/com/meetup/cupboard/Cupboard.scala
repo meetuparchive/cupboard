@@ -90,18 +90,34 @@ object Cupboard {
     keyFactory.newKey(id)
   }
 
-  def load[C](ds: Datastore, id: Long)(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C]) = {
-    loadKind(ds, id, getName(typeTag))
+  def load[C](ds: Datastore, id: Long, ancestorPath: Seq[(String, Int)] = Seq())(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C]) = {
+    loadKind(ds, id, getName(typeTag), ancestorPath)
   }
 
-  def loadKind[C](ds: Datastore, id: Long, kind: String)(implicit cf: DatastoreFormat[C]): Result[C] = {
+  def mkPathElement(tuple: (String, Int)): PathElement = {
+    val (kind, id) = tuple
+    PathElement.of(kind, id)
+  }
+
+  def loadKind[C](ds: Datastore, id: Long, kind: String, ancestorPath: Seq[(String, Int)] = Seq())(implicit cf: DatastoreFormat[C]): Result[C] = {
     val key = ds.newKeyFactory()
       .kind(kind)
-      .newKey(id)
+    val ancestoredKey: KeyFactory = if (ancestorPath.length > 0) {
+      if (ancestorPath.length == 1) {
+        key.ancestors(mkPathElement(ancestorPath.head))
+      } else {
+        key.ancestors(
+          mkPathElement(ancestorPath.head),
+          ancestorPath.tail.map(mkPathElement(_)): _*)
+      }
+    } else key
+    loadEntity(ds, id, ancestoredKey.newKey(id), cf)
+  }
 
+  def loadEntity[C](ds: Datastore, id: Long, key: Key, cf: DatastoreFormat[C]): Result[C] = {
     val entityXor: Xor[Throwable, Entity] = Option(ds.get(key, Array.empty[ReadOption]: _*))
       .map(Xor.Right(_)) // converting option to Xor
-      .getOrElse(Xor.Left(new RuntimeException(s"No entity found with id $id")))
+      .getOrElse(Xor.Left(new RuntimeException(s"No entity found with id: $id, key: $key")))
 
     entityXor.flatMap((entity: Entity) => entityToCaseClass[C](id, entity, cf))
   }
@@ -131,8 +147,8 @@ object Cupboard {
     Persisted(Long.unbox(key.id()), caseClass, now, now)
   }
 
-  private def updateEntity[C](ds: Datastore, caseClass: C, key: Key, kind: String)(implicit cf: DatastoreFormat[C], classtag: ClassTag[C]): Xor[Throwable, Persisted[C]] = {
-    val loadResponse = this.loadKind(ds, key.id(), kind)
+  private def updateEntity[C](ds: Datastore, caseClass: C, key: Key, kind: String, ancestorPath: Seq[(String, Int)] = Seq())(implicit cf: DatastoreFormat[C], classtag: ClassTag[C]): Xor[Throwable, Persisted[C]] = {
+    val loadResponse = this.loadKind(ds, key.id(), kind, ancestorPath)
     loadResponse.map { persisted =>
       val eBuilder = Entity.builder(key)
       val e = cf.buildEntity(caseClass, eBuilder)
