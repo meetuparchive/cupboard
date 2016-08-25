@@ -60,16 +60,16 @@ object Cupboard {
    *
    * This will replace the old entity with what you're providing.
    */
-  def update[C](ds: Datastore, caseClass: C, id: Long, kind: String)(implicit cf: DatastoreFormat[C], classtag: ClassTag[C]): Result[C] = {
+  def update[C](ds: Datastore, caseClass: C, id: Long, kind: String, ancestorPath: Seq[(String, Int)])(implicit cf: DatastoreFormat[C], classtag: ClassTag[C]): Result[C] = {
     val key = getKeyWithId(ds, kind, id)
-    updateEntity[C](ds, caseClass, key, kind)
+    updateEntity[C](ds, caseClass, key, kind, ancestorPath)
   }
 
   /**
    * Update an entity with a new value.
    */
-  def update[C](ds: Datastore, caseClass: C, id: Long)(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C], classtag: ClassTag[C]): Result[C] = {
-    update(ds, caseClass, id, getName(typeTag))
+  def update[C](ds: Datastore, caseClass: C, id: Long, ancestorPath: Seq[(String, Int)] = Seq())(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C], classtag: ClassTag[C]): Result[C] = {
+    update(ds, caseClass, id, getName(typeTag), ancestorPath)
   }
 
   def getKey(ds: Datastore, kind: String): Key = {
