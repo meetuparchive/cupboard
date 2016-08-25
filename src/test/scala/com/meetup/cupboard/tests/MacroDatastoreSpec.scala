@@ -45,6 +45,20 @@ class MacroDatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
       }
     }
 
+    it("should support saving and updating with ancestor keys") {
+      withDatastore() { ds =>
+        val f = Foo("test", 3, true)
+        val p = Cupboard.saveWithAncestor(ds, f, "Foo", "Parent", 999)
+        val persistedF = p.getOrElse(fail())
+        val id = persistedF.id
+
+        val updatedF = f.copy(i = 4)
+
+        val updated = Cupboard.update[Foo](ds, updatedF, id, Seq(("Parent", 999)))
+        updated.map(_.entity.i) shouldBe Xor.Right(updatedF.i)
+      }
+    }
+
     it("should support custom kinds") {
       withDatastore() { ds =>
 
