@@ -15,9 +15,12 @@ scalacOptions ++= Seq(
 )
 
 enablePlugins(CommonSettingsPlugin)
-enablePlugins(NexusPlugin)
 enablePlugins(CoverallsWrapper)
 
 resolvers += Resolver.sonatypeRepo("releases")
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+
+bintrayOrganization in ThisBuild := Some("meetup")
+
+licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
