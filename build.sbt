@@ -16,7 +16,7 @@ scalacOptions ++= Seq(
 
 parallelExecution in Test := false
 
-fork in Test := false
+fork in Test := true
 
 enablePlugins(CommonSettingsPlugin)
 enablePlugins(CoverallsWrapper)
