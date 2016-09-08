@@ -6,9 +6,11 @@ CI_IVY_CACHE ?= $(HOME)/.ivy2
 CI_SBT_CACHE ?= $(HOME)/.sbt
 CI_WORKDIR ?= $(shell pwd)
 
-VERSION ?= $(CI_BUILD_NUMBER)
+TARGET ?= __package-sbt
 
-BUILDER_TAG = "mup.cr/blt/build-sbt:78"
+VERSION ?= 0.0.$(CI_BUILD_NUMBER)
+
+BUILDER_TAG = "meetup/sbt-builder:0.1.5"
 
 # lists all available targets
 list:
@@ -23,7 +25,7 @@ list:
 # required for list
 no_op__:
 
-package-sbt:
+__package-sbt:
 	sbt clean \
 	"set coverageEnabled := true" \
 	"set coverageOutputHTML := false" \
@@ -33,26 +35,30 @@ package-sbt:
 	coverageOff \
 	publishLocal \
 	component:test
-
-# We clean the locally cached version
-# of the jar when we're done publishing.
-publish-sbt: package-sbt component-test-sbt
-	sbt publish cleanLocal
-
-component-test-sbt:
 	cd src/component/sbt && sbt component:test
 
-publish:
+__publish-sbt: __package-sbt
+	sbt publish cleanLocal
+
+__set-publish:
+	$(eval TARGET=__publish-sbt)
+
+__contained-target:
 	docker run \
 		--rm \
 		-v $(CI_WORKDIR):/data \
 		-v $(CI_IVY_CACHE):/root/.ivy2 \
 		-v $(CI_SBT_CACHE):/root/.sbt \
-		-e VERSION=$(VERSION) \
-		-e COVERALLS_REPO_TOKEN=$(COVERALLS_REPO_TOKEN) \
+		-v $(HOME)/.bintray:/root/.bintray \
+		-e CI_BUILD_NUMBER=$(CI_BUILD_NUMBER) \
+		-e TRAVIS_JOB_ID=$(TRAVIS_JOB_ID) \
+		-e TRAVIS_PULL_REQUEST=$(TRAVIS_PULL_REQUEST) \
 		$(BUILDER_TAG) \
-		publish-sbt
+		make $(TARGET)
 
-# Required for SBT.
+package: __contained-target
+
+publish: __set-publish __contained-target
+
 version:
 	@echo $(VERSION)
