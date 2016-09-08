@@ -14,6 +14,10 @@ scalacOptions ++= Seq(
   "-language:reflectiveCalls"   // necessary until we implement "vampire methods" to eliminate this warning
 )
 
+parallelExecution in Test := false
+
+fork in Test := false
+
 enablePlugins(CommonSettingsPlugin)
 enablePlugins(CoverallsWrapper)
 
