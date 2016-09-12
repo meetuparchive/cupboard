@@ -51,7 +51,7 @@ trait AdHocDatastore extends Suite {
     } finally {
       AdHocDatastore.count -= 1
       println("In finally block of AdHocDatastore.")
-      if (count == 0) lds.stop()
+      if (AdHocDatastore.count == 0) lds.stop()
     }
   }
 }
