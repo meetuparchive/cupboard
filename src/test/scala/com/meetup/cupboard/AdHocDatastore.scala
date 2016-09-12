@@ -36,9 +36,6 @@ trait AdHocDatastore extends Suite {
       }
       val a = f(ds)
       println("Test function completed.")
-      lds.stop()
-      Thread.sleep(5000)
-      println("Datastore stopped.")
       a
     } catch {
       case e: TestFailedException => {
