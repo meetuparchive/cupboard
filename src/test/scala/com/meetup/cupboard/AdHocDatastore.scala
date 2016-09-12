@@ -50,8 +50,8 @@ trait AdHocDatastore extends Suite {
       }
     } finally {
       AdHocDatastore.count -= 1
-      println("In finally block of AdHocDatastore.")
-      if (AdHocDatastore.count == 0) lds.stop()
+      println(s"In finally block of AdHocDatastore: $count")
+      //if (AdHocDatastore.count == 0) lds.stop()
     }
   }
 }
