@@ -11,7 +11,7 @@ class JarCupboardComponentTest extends FunSpec with Matchers {
 
   describe("jar-cupboard-test") {
     it("macro should work as dependency") {
-        assert(User.properties.username.name == "username")
+      assert(User.properties.username.name == "username")
     }
   }
 }
