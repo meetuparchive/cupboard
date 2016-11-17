@@ -27,4 +27,4 @@ addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.fu
 
 bintrayOrganization in ThisBuild := Some("meetup")
 
-licenses += ("MIT", url("http://opensource.org/licenses/MIT"))
+licenses in ThisBuild += ("MIT", url("http://opensource.org/licenses/MIT"))
