@@ -2,6 +2,7 @@
 
 ###
 Note there is currently a known performance issue with cupboard, to be resolved in an upcoming release.
+We believe that the cause is that we're not properly maintaining open connections to google datastore.
 ###
 
 [![Coverage Status](https://coveralls.io/repos/github/meetup/cupboard/badge.svg?branch=master&t=iBRIRu)](https://coveralls.io/github/meetup/cupboard?branch=master)
