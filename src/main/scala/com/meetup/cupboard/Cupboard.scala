@@ -60,7 +60,7 @@ object Cupboard {
    *
    * This will replace the old entity with what you're providing.
    */
-  def update[C](ds: Datastore, caseClass: C, id: Long, kind: String, ancestorPath: Seq[(String, Int)])(implicit cf: DatastoreFormat[C], classtag: ClassTag[C]): Result[C] = {
+  def update[C](ds: Datastore, caseClass: C, id: Long, kind: String, ancestorPath: Seq[(String, Long)])(implicit cf: DatastoreFormat[C], classtag: ClassTag[C]): Result[C] = {
     val key = getKeyWithId(ds, kind, id)
     updateEntity[C](ds, caseClass, key, kind, ancestorPath)
   }
@@ -68,7 +68,7 @@ object Cupboard {
   /**
    * Update an entity with a new value.
    */
-  def update[C](ds: Datastore, caseClass: C, id: Long, ancestorPath: Seq[(String, Int)] = Seq())(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C], classtag: ClassTag[C]): Result[C] = {
+  def update[C](ds: Datastore, caseClass: C, id: Long, ancestorPath: Seq[(String, Long)] = Seq())(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C], classtag: ClassTag[C]): Result[C] = {
     update(ds, caseClass, id, getName(typeTag), ancestorPath)
   }
 
@@ -90,16 +90,16 @@ object Cupboard {
     keyFactory.newKey(id)
   }
 
-  def load[C](ds: Datastore, id: Long, ancestorPath: Seq[(String, Int)] = Seq())(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C]) = {
+  def load[C](ds: Datastore, id: Long, ancestorPath: Seq[(String, Long)] = Seq())(implicit cf: DatastoreFormat[C], typeTag: WeakTypeTag[C]) = {
     loadKind(ds, id, getName(typeTag), ancestorPath)
   }
 
-  def mkPathElement(tuple: (String, Int)): PathElement = {
+  def mkPathElement(tuple: (String, Long)): PathElement = {
     val (kind, id) = tuple
     PathElement.of(kind, id)
   }
 
-  def loadKind[C](ds: Datastore, id: Long, kind: String, ancestorPath: Seq[(String, Int)] = Seq())(implicit cf: DatastoreFormat[C]): Result[C] = {
+  def loadKind[C](ds: Datastore, id: Long, kind: String, ancestorPath: Seq[(String, Long)] = Seq())(implicit cf: DatastoreFormat[C]): Result[C] = {
     val key = ds.newKeyFactory()
       .kind(kind)
     val ancestoredKey: KeyFactory = if (ancestorPath.length > 0) {
@@ -147,7 +147,7 @@ object Cupboard {
     Persisted(Long.unbox(key.id()), caseClass, now, now)
   }
 
-  private def updateEntity[C](ds: Datastore, caseClass: C, key: Key, kind: String, ancestorPath: Seq[(String, Int)] = Seq())(implicit cf: DatastoreFormat[C], classtag: ClassTag[C]): Xor[Throwable, Persisted[C]] = {
+  private def updateEntity[C](ds: Datastore, caseClass: C, key: Key, kind: String, ancestorPath: Seq[(String, Long)] = Seq())(implicit cf: DatastoreFormat[C], classtag: ClassTag[C]): Xor[Throwable, Persisted[C]] = {
     val loadResponse = this.loadKind(ds, key.id(), kind, ancestorPath)
     loadResponse.map { persisted =>
       val eBuilder = Entity.builder(key)

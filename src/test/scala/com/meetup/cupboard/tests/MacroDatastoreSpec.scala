@@ -54,7 +54,7 @@ class MacroDatastoreSpec extends FunSpec with Matchers with AdHocDatastore {
 
         val updatedF = f.copy(i = 4)
 
-        val updated = Cupboard.update[Foo](ds, updatedF, id, Seq(("Parent", 999)))
+        val updated = Cupboard.update[Foo](ds, updatedF, id, Seq(("Parent", 999L)))
         updated.map(_.entity.i) shouldBe Xor.Right(updatedF.i)
       }
     }
