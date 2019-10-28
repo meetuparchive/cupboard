@@ -1,7 +1,5 @@
 package com.meetup.cupboard
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import com.google.cloud.datastore.Datastore
 import com.google.cloud.datastore.testing.LocalDatastoreHelper
 import org.scalatest.Suite
@@ -24,7 +22,7 @@ trait AdHocDatastore extends Suite {
           println("Local datastore created.")
           lds.start()
           println("Local datastore started.")
-          val cached = lds.options().service()
+          val cached = lds.getOptions().getService()
           AdHocDatastore.cachedDatastore = Some(cached)
           AdHocDatastore.count += 1
           cached

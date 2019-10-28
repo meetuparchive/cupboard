@@ -4,11 +4,9 @@ import org.scalatest._
 import com.meetup.cupboard.models._
 import com.meetup.cupboard.datastore.DatastoreProperties._
 import com.meetup.cupboard.datastore.DatastoreProperties.InstantDatastoreProperty
-import com.google.cloud.datastore.{DateTime => GDateTime}
 import com.meetup.cupboard.{Persistable, Property}
 import java.time.Instant
 
-import com.google.cloud.datastore.DateTime
 import com.meetup.cupboard.datastore.DatastoreProperty
 import scala.language.reflectiveCalls
 
