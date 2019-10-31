@@ -3,7 +3,6 @@ package com.meetup.cupboard
 import java.time.Instant
 
 import cats.data.Xor
-import com.google.cloud.datastore.Entity.Builder
 import com.google.cloud.datastore._
 
 import scala.reflect.runtime.universe.WeakTypeTag
@@ -74,19 +73,19 @@ object Cupboard {
 
   def getKey(ds: Datastore, kind: String): Key = {
     val keyFactory = ds.newKeyFactory()
-      .kind(kind)
+      .setKind(kind)
     ds.allocateId(keyFactory.newKey())
   }
 
   def getKeyWithAncestor(ds: Datastore, kind: String, ancestorKind: String, ancestorValue: Long): Key = {
     val keyFactory = ds.newKeyFactory()
-      .kind(kind)
-      .ancestors(PathElement.of(ancestorKind, ancestorValue))
+      .setKind(kind)
+      .addAncestor(PathElement.of(ancestorKind, ancestorValue))
     ds.allocateId(keyFactory.newKey())
   }
 
   def getKeyWithId(ds: Datastore, kind: String, id: Long): Key = {
-    val keyFactory = ds.newKeyFactory().kind(kind)
+    val keyFactory = ds.newKeyFactory().setKind(kind)
     keyFactory.newKey(id)
   }
 
@@ -101,12 +100,12 @@ object Cupboard {
 
   def loadKind[C](ds: Datastore, id: Long, kind: String, ancestorPath: Seq[(String, Long)] = Seq())(implicit cf: DatastoreFormat[C]): Result[C] = {
     val key = ds.newKeyFactory()
-      .kind(kind)
+      .setKind(kind)
     val ancestoredKey: KeyFactory = if (ancestorPath.length > 0) {
       if (ancestorPath.length == 1) {
-        key.ancestors(mkPathElement(ancestorPath.head))
+        key.addAncestor(mkPathElement(ancestorPath.head))
       } else {
-        key.ancestors(
+        key.addAncestors(
           mkPathElement(ancestorPath.head),
           ancestorPath.tail.map(mkPathElement(_)): _*)
       }
@@ -136,7 +135,7 @@ object Cupboard {
   }
 
   private def createEntity[C](ds: Datastore, caseClass: C, key: Key, cf: DatastoreFormat[C]): Persisted[C] = {
-    val eBuilder = Entity.builder(key)
+    val eBuilder = Entity.newBuilder(key)
     val e = cf.buildEntity(caseClass, eBuilder)
     val now = Instant.now
     InstantDatastoreProperty.setEntityProperty(now, "modified", e)
@@ -144,13 +143,13 @@ object Cupboard {
 
     ds.put(e.build())
 
-    Persisted(Long.unbox(key.id()), caseClass, now, now)
+    Persisted(Long.unbox(key.getId()), caseClass, now, now)
   }
 
   private def updateEntity[C](ds: Datastore, caseClass: C, key: Key, kind: String, ancestorPath: Seq[(String, Long)] = Seq())(implicit cf: DatastoreFormat[C], classtag: ClassTag[C]): Xor[Throwable, Persisted[C]] = {
-    val loadResponse = this.loadKind(ds, key.id(), kind, ancestorPath)
+    val loadResponse = this.loadKind(ds, key.getId(), kind, ancestorPath)
     loadResponse.map { persisted =>
-      val eBuilder = Entity.builder(key)
+      val eBuilder = Entity.newBuilder(key)
       val e = cf.buildEntity(caseClass, eBuilder)
 
       val now = Instant.now
@@ -159,7 +158,7 @@ object Cupboard {
 
       ds.put(e.build())
 
-      Persisted(Long.unbox(key.id()), caseClass, now, persisted.created)
+      Persisted(Long.unbox(key.getId()), caseClass, now, persisted.created)
     }
   }
 

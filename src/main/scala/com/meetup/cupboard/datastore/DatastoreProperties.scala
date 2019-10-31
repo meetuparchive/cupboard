@@ -4,7 +4,8 @@ import java.time.format.DateTimeFormatter
 import java.time.{Instant, Period, ZoneOffset, ZonedDateTime}
 
 import cats.data.Xor
-import com.google.cloud.datastore.{DateTime => GDateTime, _}
+import com.google.cloud.{Timestamp => GTimestamp}
+import com.google.cloud.datastore._
 
 import scala.collection.JavaConversions._
 import com.meetup.cupboard._
@@ -49,7 +50,7 @@ trait DatastoreProperties extends LowPriorityProperties {
       }
 
       def setEntityProperty(v: Option[A], name: String, e: Entity.Builder): Entity.Builder = {
-        val emptyEntity = Entity.builder(e.build().key())
+        val emptyEntity = Entity.newBuilder(e.build().getKey())
         v match {
           case Some(v1) =>
             emptyEntity.set("type", "Some")
@@ -72,7 +73,7 @@ trait DatastoreProperties extends LowPriorityProperties {
 
       def setEntityProperty(v: List[E], name: String, e: Entity.Builder): Entity.Builder = {
         val entities = v.map { x =>
-          val emptyEntity = FullEntity.builder()
+          val emptyEntity = FullEntity.newBuilder()
           val newEntity = entityDatastoreFormat.buildEntity(x, e).build()
           new EntityValue(newEntity)
         }
@@ -158,7 +159,7 @@ trait LowPriorityProperties {
     override def getFilterGe(v: Long, fieldName: String): PropertyFilter = PropertyFilter.ge(fieldName, v)
   }
 
-  implicit object ZonedDateTimeDatastoreProperty extends DatastoreProperty[ZonedDateTime, GDateTime] {
+  implicit object ZonedDateTimeDatastoreProperty extends DatastoreProperty[ZonedDateTime, GTimestamp] {
 
     val formatter = DateTimeFormatter.ISO_ZONED_DATE_TIME
 
@@ -173,16 +174,16 @@ trait LowPriorityProperties {
     }
   }
 
-  implicit object InstantDatastoreProperty extends DatastoreProperty[Instant, GDateTime] {
+  implicit object InstantDatastoreProperty extends DatastoreProperty[Instant, GTimestamp] {
     def getValueFromEntity(name: String, e: FullEntity[_]) = {
       Xor.catchNonFatal {
-        val millis: Long = e.getDateTime(name).timestampMillis()
+        val millis: Long = e.getTimestamp(name).toDate.getTime
         Instant.ofEpochMilli(millis)
       }
     }
 
     def setEntityProperty(v: Instant, name: String, e: Entity.Builder) = {
-      e.set(name, GDateTime.copyFrom(java.util.Date.from(v)))
+      e.set(name, GTimestamp.of(java.util.Date.from(v)))
     }
   }
 
@@ -194,7 +195,7 @@ trait LowPriorityProperties {
       }
 
       def setEntityProperty(v: E, name: String, e: Entity.Builder): Entity.Builder = {
-        val emptyEntity = Entity.builder(e.build().key())
+        val emptyEntity = Entity.newBuilder(e.build().getKey())
         val newEntity = entityDatastoreFormat.buildEntity(v, emptyEntity)
         e.set(name, newEntity.build())
       }

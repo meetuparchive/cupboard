@@ -7,8 +7,6 @@ import com.google.cloud.datastore.StructuredQuery.{CompositeFilter, PropertyFilt
 import com.google.cloud.datastore.{QueryResults, EntityQuery => GEntityQuery, Query => GQuery, _}
 import com.meetup.cupboard.datastore.DatastoreProperties
 
-import scala.util.control.NonFatal
-import scala.util.{Either, Left, Right}
 import scala.language.existentials
 
 case class Filter(gfilter: GFilter)
@@ -40,7 +38,7 @@ case class EntityQuery[C](
 
   def resultAsSeq(ds: Datastore): Xor[Throwable, Seq[Persisted[C]]] = {
     val result = runQuery(ds).asScala.map(entity => {
-      val key: Long = entity.key().id()
+      val key: Long = entity.getKey().getId()
       Cupboard.entityToCaseClass(key, entity, cf)
     })
     DatastoreProperties.sequence(result.toList)
@@ -63,12 +61,12 @@ case class EntityQuery[C](
       case None => Cupboard.getName(typeTag)
     }
     val kindedQuery = GQuery
-      .entityQueryBuilder()
-      .kind(kindForQuery)
+      .newEntityQueryBuilder()
+      .setKind(kindForQuery)
 
     val filteredQuery = combineFilters match {
       case None => kindedQuery
-      case Some(filters) => kindedQuery.filter(filters)
+      case Some(filters) => kindedQuery.setFilter(filters)
     }
 
     filteredQuery.build()
