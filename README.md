@@ -1,11 +1,12 @@
-## Cupboard
+# Cupboard
+
+[![Build Status](https://travis-ci.org/meetup/cupboard.svg?branch=main)](https://travis-ci.org/meetup/cupboard)
+[![Coverage Status](https://coveralls.io/repos/github/meetup/cupboard/badge.svg?branch=master&t=iBRIRu)](https://coveralls.io/github/meetup/cupboard?branch=master)
 
 ###
 Note there is currently a known performance issue with cupboard, to be resolved in an upcoming release.
 We believe that the cause is that we're not properly maintaining open connections to google datastore.
 ###
-
-[![Coverage Status](https://coveralls.io/repos/github/meetup/cupboard/badge.svg?branch=master&t=iBRIRu)](https://coveralls.io/github/meetup/cupboard?branch=master)
 
 "library making it easier, safer, and less boilerplatey to store and retrieve models from GCD"
 
